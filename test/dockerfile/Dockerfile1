@@ -1,0 +1,13 @@
+FROM armdocker.rnd.ericsson.se/proj-eo-cm/eric-eo-cm-sles-base-jre:latest
+#ADP Labels
+#Activemq version details and home dirs
+ARG ACTIVEMQ_VERSION=5.16.0
+ENV ACTIVEMQ_HOME=/opt/activemq
+# Copy ActiveMQ software and default files needed for ECM
+COPY apache-activemq-${ACTIVEMQ_VERSION} ${ACTIVEMQ_HOME}
+COPY conf/* ${ACTIVEMQ_HOME}/conf/
+RUN chown -R ${EOCM_UID}:${EOCM_GID} ${ACTIVEMQ_HOME}
+#Ports needed for activemq --> gui - 8161, openwire - 61616, amqp - 5672, stomp - 61613, mqtt - 1883, ws - 61614
+EXPOSE 8161 61616 5672 61613 1883 61614
+USER eocm
+CMD ["/bin/sh", "-c", "/opt/activemq/bin/activemq console"]

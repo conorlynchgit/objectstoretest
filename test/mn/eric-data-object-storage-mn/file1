@@ -1,0 +1,814 @@
+NAME: eric-data-object-storage-mn
+LAST DEPLOYED: Tue Aug 24 15:02:08 2021
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+affinity:
+  podAntiAffinity: hard
+autoEncryption:
+  enabled: true
+  kmsConfigSecret: eric-data-object-storage-mn-kms-set
+brAgent:
+  backupTypeList:
+  - DEFAULT
+  brLabelKey: adpbrlabelkey
+  enabled: false
+  livenessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    successThreshold: 1
+  logLevel: info
+  objectStorage:
+    host: eric-data-object-storage-mn
+    port: 9000
+  properties:
+    production_date: "2021-02-01"
+  readinessProbe:
+    failureThreshold: 60
+    initialDelaySeconds: 30
+    periodSeconds: 1
+    successThreshold: 1
+  resources:
+    limits:
+      cpu: "1"
+      memory: 256Mi
+    requests:
+      cpu: 200m
+      memory: 16Mi
+  retryTimes: 3
+  securityContext:
+    runAsGroup: 0
+    runAsUser: 60618
+  tls:
+    certName: cert.pem
+    keyName: key.pem
+    paths:
+      clientCerts: /etc/tls/cert/client
+      internalCa: /etc/tls/ca/internal
+clusterDomain: cluster.local
+credentials:
+  kubernetesSecretName: ""
+environment:
+  MINIO_BROWSER: "off"
+  MINIO_PROMETHEUS_AUTH_TYPE: public
+imageCredentials:
+  pullPolicy: IfNotPresent
+  pullSecret: ""
+  registry:
+    url: ""
+  repoPath: proj-adp-eric-data-object-storage-mn-drop
+images:
+  bra:
+    name: eric-data-object-storage-bra
+    tag: 1.11.0-19
+  init:
+    name: eric-data-object-storage-mn-init
+    tag: 1.11.0-19
+  minio:
+    name: eric-data-object-storage-mn
+    tag: 1.11.0-19
+keyManagement:
+  hostname: eric-sec-key-management
+  port: 8200
+  serviceAccountNameForCredentials: eric-sec-key-management-admin
+  tls:
+    caCert: cacertbundle.pem
+    caSecret: eric-sec-sip-tls-trusted-root-cert
+  tokenKey: token
+  tokenSecretName: eric-sec-key-management-root-token
+lifecycle:
+  configMap: lifecycle-config
+  hookWeight: "-4"
+  mcHost: client
+metadata:
+  annotations:
+    prometheus.io/path: /minio/prometheus/metrics
+    prometheus.io/port: "9000"
+    prometheus.io/scrape: "true"
+metrics:
+  serviceMonitor:
+    additionalLabels: {}
+    enabled: false
+mgt:
+  livenessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 1
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  securityContext:
+    runAsGroup: 0
+    runAsUser: 32499
+mode: distributed
+mountPath: /export
+networkPolicy:
+  allowExternal: true
+  enabled: false
+nodeSelector: {}
+objects_lifecycle_cfg: ""
+persistentVolumeClaim:
+  size: 10Gi
+  storageClassName: ""
+  storageConnectivity: networked
+  subPath: ""
+  volumeNamePrefix: export
+priorityClassName: ""
+productInfo:
+  rstate: R12A
+replicas: 4
+server:
+  livenessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 30
+    periodSeconds: 5
+    successThreshold: 1
+    timeoutSeconds: 1
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    successThreshold: 1
+    timeoutSeconds: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  securityContext:
+    runAsGroup: 0
+    runAsUser: 58325
+service:
+  annotations: {}
+  port: 9000
+  type: ClusterIP
+serviceAccount:
+  create: true
+  name: null
+tls:
+  caCert: cacertbundle.pem
+  caSecret: eric-sec-sip-tls-trusted-root-cert
+  certSecret: ""
+  privateKey: private.key
+  publicCrt: public.crt
+tolerations: []
+updateStrategy:
+  mgt:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  server:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+      partition: 0
+    type: RollingUpdate
+
+HOOKS:
+MANIFEST:
+---
+# Source: eric-data-object-storage-mn/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: "eric-data-object-storage-mn"
+  labels:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/version: 1.11.0_19
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+    app: eric-data-object-storage-mn
+    chart: eric-data-object-storage-mn-1.11.0_19
+    release: eric-data-object-storage-mn
+    heritage: Helm
+  annotations:
+    ericsson.com/product-name: "Object Storage MN Helm Chart"
+    ericsson.com/product-number: "CXC 174 2822"
+    ericsson.com/product-revision: 1.11.0
+    
+    prometheus.io/path: /minio/prometheus/metrics
+    prometheus.io/port: "9000"
+    prometheus.io/scrape: "true"
+  namespace: "default"
+---
+# Source: eric-data-object-storage-mn/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eric-data-object-storage-mn-kms-config
+  labels:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/version: 1.11.0_19
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+    app: eric-data-object-storage-mn
+    chart: eric-data-object-storage-mn-1.11.0_19
+    release: eric-data-object-storage-mn
+    heritage: Helm
+  annotations:
+    ericsson.com/product-name: "Object Storage MN Helm Chart"
+    ericsson.com/product-number: "CXC 174 2822"
+    ericsson.com/product-revision: 1.11.0
+    
+    prometheus.io/path: /minio/prometheus/metrics
+    prometheus.io/port: "9000"
+    prometheus.io/scrape: "true"
+data:
+  config.json: |
+    {
+      "kms": {
+        "dns": "eric-sec-key-management",
+        "port": "8200",
+        "namespace": "default",
+        "root_token_secret": "eric-sec-key-management-root-token",
+        "root_token_key": "token",
+        "credentials_service_account_name": "eric-sec-key-management-admin",
+        "credentials_role_name": "service-credentials",
+        "kv_secret_path": "secret-v2"
+      },
+      "siptls": {
+        "ca_secret": "eric-sec-sip-tls-trusted-root-cert",
+        "ca_cert_key": "cacertbundle.pem",
+        "namespace": "default"
+      },
+      "obj_storage": {
+        "tls_enable": true,
+        "data_encryption": true,
+        "config_kms_secret": "eric-data-object-storage-mn-kms-set",
+        "role_key": "role_id",
+        "secret_key": "secret_id",
+        "auth_path": "approle",
+        "role_name": "my-role",
+        "policy_name": "minio-policy",
+        "transit_name": "my-minio-key",
+        "transit_path": "transit",
+        "credentials_service_account_name": "eric-data-object-storage-mn",
+        "namespace": "default"
+      }
+    }
+---
+# Source: eric-data-object-storage-mn/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: eric-data-object-storage-mn-role
+  labels:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/version: 1.11.0_19
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+    app: eric-data-object-storage-mn
+    chart: eric-data-object-storage-mn-1.11.0_19
+    release: eric-data-object-storage-mn
+    heritage: Helm
+  annotations:
+    ericsson.com/product-name: "Object Storage MN Helm Chart"
+    ericsson.com/product-number: "CXC 174 2822"
+    ericsson.com/product-revision: 1.11.0
+    
+    prometheus.io/path: /minio/prometheus/metrics
+    prometheus.io/port: "9000"
+    prometheus.io/scrape: "true"
+  namespace: "default"
+rules:
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["secrets"]
+    verbs: ["create"]
+
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["secrets"]
+    resourceNames: ["eric-data-object-storage-mn-kms-set"]
+    verbs: ["delete"]
+
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["secrets"]
+    resourceNames: ["eric-sec-sip-tls-trusted-root-cert", "eric-data-object-storage-mn-kms-set", "eric-sec-key-management-admin-token"]
+    verbs: ["get"]
+---
+# Source: eric-data-object-storage-mn/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: eric-data-object-storage-mn-rolebinding
+  labels:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/version: 1.11.0_19
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+    app: eric-data-object-storage-mn
+    chart: eric-data-object-storage-mn-1.11.0_19
+    release: eric-data-object-storage-mn
+    heritage: Helm
+  annotations:
+    ericsson.com/product-name: "Object Storage MN Helm Chart"
+    ericsson.com/product-number: "CXC 174 2822"
+    ericsson.com/product-revision: 1.11.0
+    
+    prometheus.io/path: /minio/prometheus/metrics
+    prometheus.io/port: "9000"
+    prometheus.io/scrape: "true"
+  namespace: "default"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: eric-data-object-storage-mn-role
+subjects:
+- kind: ServiceAccount
+  name: "eric-data-object-storage-mn"
+---
+# Source: eric-data-object-storage-mn/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: eric-data-object-storage-mn
+  labels:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/version: 1.11.0_19
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+    app: eric-data-object-storage-mn
+    chart: eric-data-object-storage-mn-1.11.0_19
+    release: eric-data-object-storage-mn
+    heritage: Helm
+  annotations:
+    ericsson.com/product-name: "Object Storage MN Helm Chart"
+    ericsson.com/product-number: "CXC 174 2822"
+    ericsson.com/product-revision: 1.11.0
+    
+    prometheus.io/path: /minio/prometheus/metrics
+    prometheus.io/port: "9000"
+    prometheus.io/scrape: "true"
+spec:
+  type: "ClusterIP"
+  selector:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    app: eric-data-object-storage-mn
+  ports:
+    - name: service
+      port: 9000
+      protocol: TCP
+      targetPort: 9000
+---
+# Source: eric-data-object-storage-mn/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: eric-data-object-storage-mn-svc
+  labels:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/version: 1.11.0_19
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+    app: eric-data-object-storage-mn
+    chart: eric-data-object-storage-mn-1.11.0_19
+    release: eric-data-object-storage-mn
+    heritage: Helm
+  annotations:
+    ericsson.com/product-name: "Object Storage MN Helm Chart"
+    ericsson.com/product-number: "CXC 174 2822"
+    ericsson.com/product-revision: 1.11.0
+    
+    prometheus.io/path: /minio/prometheus/metrics
+    prometheus.io/port: "9000"
+    prometheus.io/scrape: "true"
+spec:
+  publishNotReadyAddresses: true
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    app: eric-data-object-storage-mn
+  ports:
+    - name: service
+      port: 9000
+      protocol: TCP
+---
+# Source: eric-data-object-storage-mn/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eric-data-object-storage-mn-mgt
+  labels:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/version: 1.11.0_19
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+    app: eric-data-object-storage-mn-mgt
+    chart: eric-data-object-storage-mn-1.11.0_19
+    release: eric-data-object-storage-mn
+    heritage: Helm
+    role: management
+  annotations:
+    ericsson.com/product-name: "Object Storage MN Helm Chart"
+    ericsson.com/product-number: "CXC 174 2822"
+    ericsson.com/product-revision: 1.11.0
+spec:
+  strategy:
+    type: "RollingUpdate"
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eric-data-object-storage-mn
+      app.kubernetes.io/instance: eric-data-object-storage-mn
+      role: management
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eric-data-object-storage-mn
+        app.kubernetes.io/version: 1.11.0_19
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/instance: eric-data-object-storage-mn
+        helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+        app: eric-data-object-storage-mn-mgt
+        chart: eric-data-object-storage-mn-1.11.0_19
+        release: eric-data-object-storage-mn
+        heritage: Helm
+        role: management
+      annotations:
+        ericsson.com/product-name: "Object Storage MN Helm Chart"
+        ericsson.com/product-number: "CXC 174 2822"
+        ericsson.com/product-revision: 1.11.0
+        checksum/config: e4ce407043c78d6cc2830e2c600557ee091b6d8a22d55e9cd87ff5269457faf4
+    spec:
+      serviceAccountName: "eric-data-object-storage-mn"
+      initContainers:
+        - name: kms-config
+          image: armdocker.rnd.ericsson.se/proj-adp-eric-data-object-storage-mn-drop/eric-data-object-storage-mn-init:1.11.0-19
+          imagePullPolicy: IfNotPresent
+          command: ["/minio/kms.sh"]
+          securityContext:
+            runAsUser: 32499
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - all
+          volumeMounts:
+            - name: kms-config
+              mountPath: /minio/config
+      containers:
+      - name: manager
+        image: armdocker.rnd.ericsson.se/proj-adp-eric-data-object-storage-mn-drop/eric-data-object-storage-mn-init:1.11.0-19
+        imagePullPolicy: IfNotPresent
+        command: ["/minio/manager.sh"]
+        securityContext:
+          runAsUser: 32499
+          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+              - all
+        volumeMounts:
+          - name: kms-config
+            mountPath: /minio/config
+          - name: trust-ca-chain
+            mountPath: /certs/ca
+            readOnly: false
+          
+        env:
+          - name: MINIO_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: 
+                key: accesskey
+          - name: MINIO_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: 
+                key: secretkey
+          - name: TZ
+            value: "UTC"
+          - name: MINIO_REPLICAS
+            value: "4"
+          - name: STORAGE_SERVER_DNS
+            value: eric-data-object-storage-mn
+          - name: MC_HOST
+            value: "client"
+          - name: TLS_ENABLED
+            value: "true"
+          - name: OBJECT_STORAGE_CAPATH
+            value: /certs/ca
+        livenessProbe:
+          exec:
+            command:
+            - cat
+            - /minio/health
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - cat
+            - /minio/health
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+
+      volumes:
+        - name: kms-config
+          configMap:
+            defaultMode: 0755
+            name: eric-data-object-storage-mn-kms-config
+        - name: trust-ca-chain
+          secret:
+            secretName: "eric-sec-sip-tls-trusted-root-cert"
+            defaultMode: 0640
+            items:
+            - key: "cacertbundle.pem"
+              path: root_ca.pem
+---
+# Source: eric-data-object-storage-mn/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: eric-data-object-storage-mn
+  labels:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/version: 1.11.0_19
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+    app: eric-data-object-storage-mn
+    chart: eric-data-object-storage-mn-1.11.0_19
+    release: eric-data-object-storage-mn
+    heritage: Helm
+  annotations:
+    ericsson.com/product-name: "Object Storage MN Helm Chart"
+    ericsson.com/product-number: "CXC 174 2822"
+    ericsson.com/product-revision: 1.11.0
+    
+    prometheus.io/path: /minio/prometheus/metrics
+    prometheus.io/port: "9000"
+    prometheus.io/scrape: "true"
+    prometheus.io/scheme: 'https'
+spec:
+  updateStrategy:
+    type: "RollingUpdate"
+    rollingUpdate:
+      partition: 0
+  podManagementPolicy: "Parallel"
+  serviceName: eric-data-object-storage-mn-svc
+  replicas: 4
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eric-data-object-storage-mn
+      app.kubernetes.io/instance: eric-data-object-storage-mn
+  template:
+    metadata:
+      name: eric-data-object-storage-mn
+      labels:
+        app.kubernetes.io/name: eric-data-object-storage-mn
+        app.kubernetes.io/version: 1.11.0_19
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/instance: eric-data-object-storage-mn
+        helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+        app: eric-data-object-storage-mn
+        chart: eric-data-object-storage-mn-1.11.0_19
+        release: eric-data-object-storage-mn
+        heritage: Helm
+      annotations:
+        ericsson.com/product-name: "Object Storage MN Helm Chart"
+        ericsson.com/product-number: "CXC 174 2822"
+        ericsson.com/product-revision: 1.11.0
+        
+        prometheus.io/path: /minio/prometheus/metrics
+        prometheus.io/port: "9000"
+        prometheus.io/scrape: "true"
+        prometheus.io/scheme: 'https'
+    spec:
+      securityContext:
+        fsGroup: 0
+      serviceAccountName: "eric-data-object-storage-mn"
+      containers:
+        - name: eric-data-object-storage-mn
+          image: armdocker.rnd.ericsson.se/proj-adp-eric-data-object-storage-mn-drop/eric-data-object-storage-mn:1.11.0-19
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 58325
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - all
+          tty: true
+          # CMD for standalone mode
+          command: [ "minio", "--config-dir", "/minio", "--certs-dir", "/minio/certs", "server", "--json", "--quiet","https://eric-data-object-storage-mn-0.eric-data-object-storage-mn-svc.default.svc.cluster.local/export","https://eric-data-object-storage-mn-1.eric-data-object-storage-mn-svc.default.svc.cluster.local/export","https://eric-data-object-storage-mn-2.eric-data-object-storage-mn-svc.default.svc.cluster.local/export","https://eric-data-object-storage-mn-3.eric-data-object-storage-mn-svc.default.svc.cluster.local/export", ]# CMD end
+          volumeMounts:
+            - name: export
+              mountPath: /export
+            - name: cert-secret-volume
+              mountPath: /minio/certs
+            - name: kms-ca
+              mountPath: /kms-ca-certs
+          ports:
+            - name: service
+              containerPort: 9000
+          env:
+            - name: TZ
+              value: "UTC"
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: 
+                  key: accesskey
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: 
+                  key: secretkey
+            - name: MINIO_SSE_AUTO_ENCRYPTION
+              value: "on"
+            - name: MINIO_SSE_VAULT_ENDPOINT
+              value: https://eric-sec-key-management.default.svc.cluster.local:8200
+            - name: MINIO_SSE_VAULT_CAPATH
+              value: /kms-ca-certs/ca.crt
+            - name: MINIO_SSE_VAULT_KEY_NAME
+              value: my-minio-key
+            - name: MINIO_SSE_VAULT_AUTH_TYPE
+              value: approle
+            - name: MINIO_SSE_VAULT_APPROLE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: "eric-data-object-storage-mn-kms-set"
+                  key: role_id
+            - name: MINIO_SSE_VAULT_APPROLE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "eric-data-object-storage-mn-kms-set"
+                  key: secret_id
+            - name: MINIO_BROWSER
+              value: "off"
+            - name: MINIO_PROMETHEUS_AUTH_TYPE
+              value: "public"
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: service
+              scheme: HTTPS
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              
+              path: /minio/health/ready
+              port: service
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - eric-data-object-storage-mn
+            topologyKey: "kubernetes.io/hostname"
+      volumes:
+        - name: minio-user
+          secret:
+            secretName: 
+        - name: cert-secret-volume
+          secret:
+            secretName: eric-data-object-storage-mn-cert
+            items:
+            - key: srvcert.pem
+              path: public.crt
+            - key: srvprivkey.pem
+              path: private.key
+            - key: srvcert.pem
+              path: CAs/public.crt
+        - name: kms-ca
+          secret:
+            secretName: "eric-sec-sip-tls-trusted-root-cert"
+            items:
+            - key: "cacertbundle.pem"
+              path: ca.crt
+  volumeClaimTemplates:
+    - metadata:
+        name: export
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+---
+# Source: eric-data-object-storage-mn/templates/server-certificate.yaml
+apiVersion: com.ericsson.sec.tls/v1alpha1
+kind: ServerCertificate
+metadata:
+  name: eric-data-object-storage-mn-cert
+  labels:
+    app.kubernetes.io/name: eric-data-object-storage-mn
+    app.kubernetes.io/version: 1.11.0_19
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: eric-data-object-storage-mn
+    helm.sh/chart: eric-data-object-storage-mn-1.11.0_19
+    app: eric-data-object-storage-mn
+    chart: eric-data-object-storage-mn-1.11.0_19
+    release: eric-data-object-storage-mn
+    heritage: Helm
+  annotations:
+    ericsson.com/product-name: "Object Storage MN Helm Chart"
+    ericsson.com/product-number: "CXC 174 2822"
+    ericsson.com/product-revision: 1.11.0
+    
+    prometheus.io/path: /minio/prometheus/metrics
+    prometheus.io/port: "9000"
+    prometheus.io/scrape: "true"
+spec:
+  # Required
+  # The secret name where SIP-TLS is storing our certificate
+  generated-secret-name: eric-data-object-storage-mn-cert
+
+  # Required
+  # The common name (and the derived SANs) populated in the certificate
+  common-name: eric-data-object-storage-mn
+
+  # Optional
+  # The time to live of the certificate (in seconds). We override the default certificate
+  # time-to-live in order to avoid deadlock when cluster is down. Since SIP-TLS
+  # is dependent on KMS, if the KMS certificate expires then SIP-TLS can no longer
+  # provision certificates. It would require manual intervention.
+  # Set to one week. The certificate is still renewed according to SIP-TLS default.
+  override-ttl: 604800
+
+  # Optional
+  # List of additonal DNS names to populate into subject alt name field
+  # By default, the following SANs are pre-populated:
+  # - DNS:<common-name>
+  # - DNS:<common-name>.<namespace>,
+  # - DNS:<common-name>.<namespace>.svc,
+  # - DNS:<common-name>.<namespace>.svc.cluster,
+  # - DNS:<common-name>.<namespace>.svc.cluster.local
+  additional-sans:
+  - DNS:*.eric-data-object-storage-mn-svc
+  - DNS:*.eric-data-object-storage-mn-svc.default
+  - DNS:*.eric-data-object-storage-mn-svc.default.svc
+  - DNS:*.eric-data-object-storage-mn-svc.default.svc.cluster
+  - DNS:*.eric-data-object-storage-mn-svc.default.svc.cluster.local
+
+NOTES:
+Ericsson object storage can be accessed via port 9000 on the following DNS name from within your cluster:
+eric-data-object-storage-mn.default.svc.cluster.local
