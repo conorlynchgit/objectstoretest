@@ -1,2 +1,0 @@
-Time                  Type    Resource
-1 hours               WRITE   .minio.sys/runDataScanner.lock
