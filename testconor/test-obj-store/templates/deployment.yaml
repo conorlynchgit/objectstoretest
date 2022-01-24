@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-obj-store
+  labels:
+    helm.sh/chart: test-obj-store-0.1.0
+    app.kubernetes.io/name: test-obj-store
+    app.kubernetes.io/instance: test-obj-store
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: test-obj-store
+      app.kubernetes.io/instance: test-obj-store
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: test-obj-store
+        app.kubernetes.io/instance: test-obj-store
+    spec:
+      containers:
+      - name: tcpdump
+        image: armdocker.rnd.ericsson.se/dockerhub-ericsson-remote/corfr/tcpdump
+        command: 
+          - /bin/sleep
+          - infinity
+      - name: eosc
+        image: armdocker.rnd.ericsson.se/proj-eo-cm/bandits/objectpoc:22
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: nfsvol 
+            mountPath: /test-nfs
+          - name: pvcvol
+            mountPath: /test-pvc
+          - name: host-path
+            mountPath: /test
+#          - name: trust-ca-chain
+#            mountPath: /etc/pki/trust/anchors/
+#            readOnly: false
+        
+        env:
+          - name: TZ
+            value: "UTC"
+          - name: MINIO_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: test-secret
+                key: accesskey
+          - name: MINIO_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: test-secret
+                key: secretkey
+          - name: STORAGE_SERVER_DNS
+            value: "eric-data-object-storage-mn"
+          - name: TLS_ENABLED
+            value: "true"
+          - name: OBJECT_STORAGE_CAPATH
+            value: /etc/pki/trust/anchors
+          
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+      nodeSelector:
+      volumes:
+        - name: nfsvol
+          persistentVolumeClaim:
+            claimName: nfs-pvc
+        - name: pvcvol 
+          persistentVolumeClaim:
+            claimName: pvcclaim
+        - name: host-path
+          hostPath:
+            path: /tmp
+#        - name: trust-ca-chain
+#          secret:
+#            secretName: eric-sec-sip-tls-trusted-root-cert
+#            items:
+#            - key: cacertbundle.pem
+#              path: root_ca.pem
+

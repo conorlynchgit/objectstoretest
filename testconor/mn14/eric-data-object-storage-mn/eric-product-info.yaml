@@ -1,0 +1,17 @@
+productName: "Object Storage MN."
+productNumber: "CXC 174 2822"
+images:
+  eric-data-object-storage-mn:
+    productName: "Object Storage MN."
+    productNumber: "CXC 174 2823"
+    registry: "armdocker.rnd.ericsson.se"
+    repoPath: "proj-adp-eric-data-object-storage-mn-drop"
+    name: "eric-data-object-storage-mn"
+    tag: "1.14.0"
+  logshipper:
+    productName: "Log Shipper IMAGE"
+    productNumber: "CXP 906 0440"
+    registry: "armdocker.rnd.ericsson.se"
+    repoPath: "proj-adp-log-released"
+    name: "eric-log-shipper"
+    tag: "6.0.0-17"

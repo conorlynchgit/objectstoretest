@@ -1,0 +1,8 @@
+
+persistentVolumeClaim:
+  # The storage class name for persistent volume,
+  #storageClassName: "local"
+  # The connectivity of the storage, either local or networked, networked is default
+  #storageConnectivity: local
+  #size of each pvc
+  size: 3Gi

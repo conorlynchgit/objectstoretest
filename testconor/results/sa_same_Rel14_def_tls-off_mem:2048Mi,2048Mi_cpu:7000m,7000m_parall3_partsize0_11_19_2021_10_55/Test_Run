@@ -1,0 +1,28 @@
+-------------START---------------------
+Fri Nov 19 10:55:13 UTC 2021
+Parameters:
+Configuration (-c sa/dist) :  sa
+SSL  (-s tls-on/tls-off) :  tls-off
+TCP (-t def/chg ) :  def
+CPU (-p 4000m ) :  7000m
+MEM (-m 5120Mi ) : 2048Mi
+Parallel (-a ): 3
+Part Size (-l  ) : 0
+Release (-r  ) : https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.14.0+41.tgz
+removing allpodstogether label from all nodes ..
+###########################################################
+################      Standalone:::TLS=OFF             ###########
+###########################################################
+removing allpodstogether label from all nodes ..
+##################################################################
+########    Creating test with PODS on same NODE    ##################
+#####################################################################
+test-obj-store-76d5c4f8b7-v4ddz is running check nodes
+eric-data-object-storage-mn-0   2/2   Running   0     5m3s   192.168.251.138   worker-pool1-yc799658-ccd-c16a018   <none>   <none>
+test-obj-store-76d5c4f8b7-v4ddz   2/2   Running   0     60s   192.168.84.68   worker-pool1-1tjetpzk-ccd-c16a018   <none>   <none>
+Running tests for TLS=off mode
+size is  1
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 1.0M Nov 19 11:01 /home/eccd/conor/test/fileToUpload.txt
+in pod
