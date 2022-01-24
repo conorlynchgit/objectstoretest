@@ -271,7 +271,7 @@ done
 }
 create_testpod() {
 # Test POD
-helm uninstall test-obj-store -n $ns
+helm uninstall test-obj-store -n $ns >/dev/null 2>&1
 sleep 120
 # remove the allpodstogether label from all nodes
 clearnodes
@@ -623,10 +623,11 @@ create_testpod $nodes
  done
 fi
 }
+basedir=`dirname "$0"`
 rel11=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.11.0+19.tgz
 rel14=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.14.0+41.tgz   
 rel15=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.15.0+9.tgz   
-rel15=/home/eccd/conor/test/mn15/eric-data-object-storage-mn
+rel15=$basedir/mn15/eric-data-object-storage-mn
 configuration="all"
 tcp="all"
 ssl="all"
@@ -636,7 +637,6 @@ part="0"
 debug="no"
 sizes="1 10 100 200 1000 2000 5000 10000"
 #sizes="1 10 100 200" 
-ns="storobj-test"
 numbertests="5"
 while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k: flag
 do
@@ -649,7 +649,7 @@ do
         p) cpulimits="${OPTARG}";; 
         u) memres="${OPTARG}";; 
         v) cpures="${OPTARG}";; 
-        b) basedir="${OPTARG}";; 
+        b) resultsdir="${OPTARG}";; 
         a) parallel="${OPTARG}";; 
         l) part="${OPTARG}";; 
         d) debug="${OPTARG}";; 
@@ -663,8 +663,12 @@ do
     esac
 done
 if [ -z $basedir ];then
-echo "Missing -b <basedir> , need to store results"
-exit 1
+resultsdir=basedir
+fi
+
+if [ -z $ns ];then
+echo "Using storobj-test as a namespace"
+ns="storobj-test"
 fi
 
 if [ -z $rel ];then
@@ -716,11 +720,10 @@ allparams=$configuration"_"$nodes"_Rel"$rel"_"$tcp"_"$ssl"_mem:"$memres","$memli
 # Start
 TIMEFORMAT=%R
 testtime=$(date +"%m_%d_%Y_%H_%M")
-#basedir="/home/eccd/test"
-testdir=$basedir"/results/"$allparams$testtime
-mindir=$basedir"/results/MIN"
-maxdir=$basedir"/results/MAX"
-servertmp=$basedir"/results/Servertmptcpdumps"
+testdir=$resultsdir"/results/"$allparams$testtime
+mindir=$resultsdir"/results/MIN"
+maxdir=$resultsdir"/results/MAX"
+servertmp=$resultsdir"/results/Servertmptcpdumps"
 mkdir -p $servertmp
 mkdir -p $testdir
 mkdir -p $mindir
