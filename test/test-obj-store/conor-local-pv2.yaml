@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: conor-pv-local2 
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: "conor-sc-local"
+  local:
+    path: /home/eccd/abc2
+  nodeAffinity:
+   required:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: kubernetes.io/hostname
+        operator: In
+        values:
+        - worker-pool1-t9335ypc-ccd-c16a018
+   

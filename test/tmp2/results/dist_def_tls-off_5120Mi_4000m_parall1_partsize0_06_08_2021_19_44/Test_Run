@@ -1,0 +1,448 @@
+-------------START---------------------
+Tue Jun  8 19:44:41 UTC 2021
+Parameters:
+Configuration (-c sa/dist) :  dist
+SSL  (-s tls-on/tls-off) :  tls-off
+TCP (-t def/chg ) :  def
+CPU (-p 4000m ) :  4000m
+MEM (-m 5120Mi ) : 5120Mi
+Parallel (-a ): 1
+Part Size (-l  ) : 0
+#########################################################
+##########  Setup Kernel Default  ############
+##########################################################
+Confirming kernel params::
+net.core.rmem_max = 212992
+net.core.wmem_max = 212992
+net.core.rmem_default = 212992
+net.core.wmem_default = 212992
+net.ipv4.tcp_rmem = 4096	87380	6291456
+net.ipv4.tcp_wmem = 4096	16384	4194304
+############################################################
+#########     Distributed:TLS=OFF                 ###########
+############################################################
+removing allpodstogether label from all nodes ..
+#######################################################################
+########    Creating test with PODS on different NODE    ################
+#######################################################################
+test-obj-store-687678b85d-lhjmx is running check nodes
+eric-data-object-storage-mn-0   1/1   Running   0     4m32s   192.168.165.22   worker-pool1-v3zls73x-ccd-c15a031   <none>   <none>
+test-obj-store-687678b85d-lhjmx   2/2   Running   0     60s   192.168.115.101   worker-pool1-m69ld1f6-ccd-c15a031   <none>   <none>
+Running tests for TLS=off mode
+size is  200MB
+#### Start SDKpython Test session  #####:
+SDK python test 1
+Throughput is 29.67
+SDK python test 2
+Throughput is 26.43
+**** NEW MIN of 26.43 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 3
+Throughput is 30.23
+**** NEW MAX of 30.23 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 4
+Throughput is 22.48
+**** NEW MIN of 22.48 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 5
+Throughput is 38.41
+**** NEW MAX of 38.41 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 6
+Throughput is 23.82
+SDK python test 7
+Throughput is 40.56
+**** NEW MAX of 40.56 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 8
+Throughput is 30.63
+SDK python test 9
+Throughput is 29.59
+SDK python test 10
+Throughput is 23.76
+SDK python test 11
+Throughput is 36.58
+SDK python test 12
+Throughput is 25.42
+SDK python test 13
+Throughput is 27.46
+SDK python test 14
+Throughput is 30.37
+SDK python test 15
+Throughput is 20.50
+**** NEW MIN of 20.50 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 16
+Throughput is 31.24
+SDK python test 17
+Throughput is 40.87
+**** NEW MAX of 40.87 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 18
+Throughput is 30.81
+SDK python test 19
+Throughput is 23.88
+SDK python test 20
+Throughput is 31.97
+SDK python test 21
+Throughput is 37.43
+SDK python test 22
+Throughput is 22.49
+SDK python test 23
+Throughput is 37.22
+SDK python test 24
+Throughput is 22.35
+SDK python test 25
+Throughput is 40.89
+**** NEW MAX of 40.89 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 26
+Throughput is 32.86
+SDK python test 27
+Throughput is 39.09
+SDK python test 28
+Throughput is 31.92
+SDK python test 29
+Throughput is 23.81
+SDK python test 30
+Throughput is 40.55
+SDK python test 31
+Throughput is 37.10
+SDK python test 32
+Throughput is 37.28
+SDK python test 33
+Throughput is 38.85
+SDK python test 34
+Throughput is 22.42
+SDK python test 35
+Throughput is 23.80
+SDK python test 36
+Throughput is 33.72
+SDK python test 37
+Throughput is 32.26
+SDK python test 38
+Throughput is 41.64
+**** NEW MAX of 41.64 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 39
+Throughput is 32.06
+SDK python test 40
+Throughput is 21.71
+SDK python test 41
+Throughput is 42.87
+**** NEW MAX of 42.87 mbs for test SDK_pythonDist_200MB_Diff_Nodes_defTCP_tlsOFF_mem5120Mi_cpu4000m_par1_partsize0
+SDK python test 42
+Throughput is 33.95
+SDK python test 43
+Throughput is 22.71
+SDK python test 44
+Throughput is 38.46
+SDK python test 45
+Throughput is 38.13
+SDK python test 46
+Throughput is 40.71
+SDK python test 47
+Throughput is 31.92
+SDK python test 48
+Throughput is 41.16
+SDK python test 49
+Throughput is 41.25
+SDK python test 50
+Throughput is 33.04
+SDK python test 51
+Throughput is 32.78
+SDK python test 52
+Throughput is 42.71
+SDK python test 53
+Throughput is 24.71
+SDK python test 54
+Throughput is 33.44
+SDK python test 55
+Throughput is 41.57
+SDK python test 56
+Throughput is 33.23
+SDK python test 57
+Throughput is 23.35
+SDK python test 58
+Throughput is 38.75
+SDK python test 59
+Throughput is 32.56
+SDK python test 60
+Throughput is 31.64
+SDK python test 61
+Throughput is 33.50
+SDK python test 62
+Throughput is 25.02
+SDK python test 63
+Throughput is 24.61
+SDK python test 64
+Throughput is 40.54
+SDK python test 65
+Throughput is 24.64
+SDK python test 66
+Throughput is 32.29
+SDK python test 67
+Throughput is 31.00
+SDK python test 68
+Throughput is 39.58
+SDK python test 69
+Throughput is 37.72
+SDK python test 70
+Throughput is 28.13
+SDK python test 71
+Throughput is 24.31
+SDK python test 72
+Throughput is 33.60
+SDK python test 73
+Throughput is 34.00
+SDK python test 74
+Throughput is 34.37
+SDK python test 75
+Throughput is 24.16
+SDK python test 76
+Throughput is 41.03
+SDK python test 77
+Throughput is 33.11
+SDK python test 78
+Throughput is 23.43
+SDK python test 79
+Throughput is 38.49
+SDK python test 80
+Throughput is 22.78
+SDK python test 81
+Throughput is 37.90
+SDK python test 82
+Throughput is 36.31
+SDK python test 83
+Throughput is 24.63
+SDK python test 84
+Throughput is 31.71
+SDK python test 85
+Throughput is 31.90
+SDK python test 86
+Throughput is 40.62
+SDK python test 87
+Throughput is 33.45
+SDK python test 88
+Throughput is 41.80
+SDK python test 89
+Throughput is 38.76
+SDK python test 90
+Throughput is 41.77
+SDK python test 91
+Throughput is 23.68
+SDK python test 92
+Throughput is 31.57
+SDK python test 93
+Throughput is 38.85
+SDK python test 94
+Throughput is 30.99
+SDK python test 95
+Throughput is 23.52
+SDK python test 96
+Throughput is 33.64
+SDK python test 97
+Throughput is 41.85
+SDK python test 98
+Throughput is 42.87
+SDK python test 99
+Throughput is 34.03
+SDK python test 100
+Throughput is 24.59
+SDK python test 101
+Throughput is 40.88
+SDK python test 102
+Throughput is 33.33
+SDK python test 103
+Throughput is 42.67
+SDK python test 104
+Throughput is 40.89
+SDK python test 105
+Throughput is 25.33
+SDK python test 106
+Throughput is 22.47
+SDK python test 107
+Throughput is 32.32
+SDK python test 108
+Throughput is 31.51
+SDK python test 109
+Throughput is 33.54
+SDK python test 110
+Throughput is 24.43
+SDK python test 111
+Throughput is 41.52
+SDK python test 112
+Throughput is 32.27
+SDK python test 113
+Throughput is 24.32
+SDK python test 114
+Throughput is 32.50
+SDK python test 115
+Throughput is 33.21
+SDK python test 116
+Throughput is 23.93
+SDK python test 117
+Throughput is 32.55
+SDK python test 118
+Throughput is 32.16
+SDK python test 119
+Throughput is 38.16
+SDK python test 120
+Throughput is 38.41
+SDK python test 121
+Throughput is 41.10
+SDK python test 122
+Throughput is 32.57
+SDK python test 123
+Throughput is 41.10
+SDK python test 124
+Throughput is 41.37
+SDK python test 125
+Throughput is 25.15
+SDK python test 126
+Throughput is 24.40
+SDK python test 127
+Throughput is 27.46
+SDK python test 128
+Throughput is 23.70
+SDK python test 129
+Throughput is 32.37
+SDK python test 130
+Throughput is 23.14
+SDK python test 131
+Throughput is 32.92
+SDK python test 132
+Throughput is 24.56
+SDK python test 133
+Throughput is 24.90
+SDK python test 134
+Throughput is 41.90
+SDK python test 135
+Throughput is 41.18
+SDK python test 136
+Throughput is 33.07
+SDK python test 137
+Throughput is 41.40
+SDK python test 138
+Throughput is 33.83
+SDK python test 139
+Throughput is 34.42
+SDK python test 140
+Throughput is 33.08
+SDK python test 141
+Throughput is 32.08
+SDK python test 142
+Throughput is 30.22
+SDK python test 143
+Throughput is 30.78
+SDK python test 144
+Throughput is 23.34
+SDK python test 145
+Throughput is 31.97
+SDK python test 146
+Throughput is 33.46
+SDK python test 147
+Throughput is 31.95
+SDK python test 148
+Throughput is 30.45
+SDK python test 149
+Throughput is 32.00
+SDK python test 150
+Throughput is 33.04
+SDK python test 151
+Throughput is 41.51
+SDK python test 152
+Throughput is 32.22
+SDK python test 153
+Throughput is 38.29
+SDK python test 154
+Throughput is 32.05
+SDK python test 155
+Throughput is 30.85
+SDK python test 156
+Throughput is 31.08
+SDK python test 157
+Throughput is 31.52
+SDK python test 158
+Throughput is 41.42
+SDK python test 159
+Throughput is 41.51
+SDK python test 160
+Throughput is 42.80
+SDK python test 161
+Throughput is 32.15
+SDK python test 162
+Throughput is 31.18
+SDK python test 163
+Throughput is 31.80
+SDK python test 164
+Throughput is 33.76
+SDK python test 165
+Throughput is 31.39
+SDK python test 166
+Throughput is 31.05
+SDK python test 167
+Throughput is 31.16
+SDK python test 168
+Throughput is 23.59
+SDK python test 169
+Throughput is 32.44
+SDK python test 170
+Throughput is 42.10
+SDK python test 171
+Throughput is 33.21
+SDK python test 172
+Throughput is 24.82
+SDK python test 173
+Throughput is 24.68
+SDK python test 174
+Throughput is 24.67
+SDK python test 175
+Throughput is 34.39
+SDK python test 176
+Throughput is 34.31
+SDK python test 177
+Throughput is 38.64
+SDK python test 178
+Throughput is 33.34
+SDK python test 179
+Throughput is 24.04
+SDK python test 180
+Throughput is 29.32
+SDK python test 181
+Throughput is 24.68
+SDK python test 182
+Throughput is 41.71
+SDK python test 183
+Throughput is 40.97
+SDK python test 184
+Throughput is 25.31
+SDK python test 185
+Throughput is 24.88
+SDK python test 186
+Throughput is 25.40
+SDK python test 187
+Throughput is 34.12
+SDK python test 188
+Throughput is 40.90
+SDK python test 189
+Throughput is 23.10
+SDK python test 190
+Throughput is 31.58
+SDK python test 191
+Throughput is 32.64
+SDK python test 192
+Throughput is 23.97
+SDK python test 193
+Throughput is 41.95
+SDK python test 194
+Throughput is 28.63
+SDK python test 195
+Throughput is 36.42
+SDK python test 196
+Throughput is 42.11
+SDK python test 197
+Throughput is 32.64
+SDK python test 198
+Throughput is 34.37
+SDK python test 199
+Throughput is 39.56
+SDK python test 200
+Throughput is 23.49
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+S3 Bench python test 1
+Time in seconds is 63.1
+#########  Stop Test Session  ######################

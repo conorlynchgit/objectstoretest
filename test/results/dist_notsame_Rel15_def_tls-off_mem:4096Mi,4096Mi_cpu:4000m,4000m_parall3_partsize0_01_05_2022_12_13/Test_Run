@@ -1,0 +1,125 @@
+-------------START---------------------
+Wed Jan  5 12:13:35 UTC 2022
+Parameters:
+Configuration (-c sa/dist) :  dist
+SSL  (-s tls-on/tls-off) :  tls-off
+TCP (-t def/chg ) :  def
+CPU (-p 4000m ) :  4000m
+MEM (-m 5120Mi ) : 4096Mi
+Parallel (-a ): 3
+Part Size (-l  ) : 0
+Release (-r  ) : /home/eccd/conor/test/mn15/eric-data-object-storage-mn
+removing allpodstogether label from all nodes ..
+############################################################
+#########     Distributed:TLS=OFF                 ###########
+############################################################
+removing allpodstogether label from all nodes ..
+#######################################################################
+########    Creating test with PODS on different NODE    ################
+#######################################################################
+test-obj-store-69cdfb54f6-j4ml6 is running check nodes
+test-obj-store-69cdfb54f6-j4ml6   2/2   Running   0     3m1s   192.168.242.24   worker-pool1-wowjry7r-ccd-c16a018   <none>   <none>
+Running tests for TLS=off mode
+size is  1
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 1.0M Jan 20 18:24 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 1.0M Jan 20 18:24 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 0
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  10
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 10M Jan 20 18:46 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 10M Jan 20 18:46 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 1.58
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  100
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 100M Jan 20 18:46 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 100M Jan 20 18:46 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is .72
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  200
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 200M Jan 20 18:49 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 200M Jan 20 18:49 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 1.45
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  1000
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 1000M Jan 20 18:52 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 1000M Jan 20 18:52 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 158.62
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  2000
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 2.0G Jan 20 18:53 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 2.0G Jan 20 18:53 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 14.22
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  5000
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 4.9G Jan 20 19:02 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 4.9G Jan 20 19:02 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 41.08
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  10000
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 9.8G Jan 20 19:08 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 9.8G Jan 20 19:09 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 33.08
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:

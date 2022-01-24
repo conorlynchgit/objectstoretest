@@ -1,0 +1,134 @@
+-------------START---------------------
+Tue Nov 16 11:13:54 UTC 2021
+Parameters:
+Configuration (-c sa/dist) :  dist
+SSL  (-s tls-on/tls-off) :  tls-off
+TCP (-t def/chg ) :  def
+CPU (-p 4000m ) :  500m
+MEM (-m 5120Mi ) : 2048Mi
+Parallel (-a ): 3
+Part Size (-l  ) : 0
+Release (-r  ) : https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.15.0+9.tgz
+removing allpodstogether label from all nodes ..
+############################################################
+#########     Distributed:TLS=OFF                 ###########
+############################################################
+removing allpodstogether label from all nodes ..
+##################################################################
+########    Creating test with PODS on same NODE    ##################
+#####################################################################
+test-obj-store-76d5c4f8b7-k88kv is running check nodes
+eric-data-object-storage-mn-0   1/1   Running   0     4m33s   192.168.84.125   worker-pool1-1tjetpzk-ccd-c16a018   <none>   <none>
+test-obj-store-76d5c4f8b7-k88kv   2/2   Running   0     60s   192.168.84.87   worker-pool1-1tjetpzk-ccd-c16a018   <none>   <none>
+Running tests for TLS=off mode
+size is  1
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 1.0M Nov 16 11:20 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 1.0M Nov 16 11:20 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 2.85
+**** NEW MAX of 2.85 mbs for test SDK_pythonver_15_Dist_1mb_same_Nodes__tlsOFF_mem:2048Mi,2048Mi_cpu:_500m,500m_par3_partsize0
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  10
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 10M Nov 16 11:20 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 10M Nov 16 11:20 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 10.75
+**** NEW MAX of 10.75 mbs for test SDK_pythonver_15_Dist_10mb_same_Nodes__tlsOFF_mem:2048Mi,2048Mi_cpu:_500m,500m_par3_partsize0
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  100
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 100M Nov 16 11:21 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 100M Nov 16 11:21 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 32.89
+**** NEW MIN of 32.89 mbs for test SDK_pythonver_15_Dist_100mb_same_Nodes__tlsOFF_mem:2048Mi,2048Mi_cpu:_500m,500m_par3_partsize0
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  200
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 200M Nov 16 11:21 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 200M Nov 16 11:21 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 48.44
+**** NEW MIN of 48.44 mbs for test SDK_pythonver_15_Dist_200mb_same_Nodes__tlsOFF_mem:2048Mi,2048Mi_cpu:_500m,500m_par3_partsize0
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  1000
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 1000M Nov 16 11:22 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 1000M Nov 16 11:22 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 51.74
+**** NEW MAX of 51.74 mbs for test SDK_pythonver_15_Dist_1000mb_same_Nodes__tlsOFF_mem:2048Mi,2048Mi_cpu:_500m,500m_par3_partsize0
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  2000
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 2.0G Nov 16 11:23 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 2.0G Nov 16 11:23 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 48.74
+**** NEW MIN of 48.74 mbs for test SDK_pythonver_15_Dist_2000mb_same_Nodes__tlsOFF_mem:2048Mi,2048Mi_cpu:_500m,500m_par3_partsize0
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  5000
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 4.9G Nov 16 11:26 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 4.9G Nov 16 11:26 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 41.73
+**** NEW MIN of 41.73 mbs for test SDK_pythonver_15_Dist_5000mb_same_Nodes__tlsOFF_mem:2048Mi,2048Mi_cpu:_500m,500m_par3_partsize0
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:
+Running tests for TLS=off mode
+size is  10000
+size of fileToUpload ..
+on node..
+-rw-r--r-- 1 eccd eccd 9.8G Nov 16 11:32 /home/eccd/conor/test/fileToUpload.txt
+in pod
+-rw-r--r-- 1 1001 1001 9.8G Nov 16 11:32 /fileToUpload.txt
+#### Start SDKpython Test session  #####:
+SDK python test 1
+#### Start Test 1 now   #####:
+Throughput is 34.25
+**** NEW MIN of 34.25 mbs for test SDK_pythonver_15_Dist_10000mb_same_Nodes__tlsOFF_mem:2048Mi,2048Mi_cpu:_500m,500m_par3_partsize0
+#### Stop Test session  #####:
+#### Start S3-benchmark Test session  #####:

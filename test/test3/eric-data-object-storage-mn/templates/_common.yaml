@@ -1,0 +1,45 @@
+{{/*
+Ericsson Product Information Helm Annotations
+*/}}
+{{- define "eric-data-object-storage-mn.helm-annotations" -}}
+ericsson.com/product-name: "Object Storage MN Helm Chart"
+ericsson.com/product-number: "CXC 174 2822"
+ericsson.com/product-revision: {{ regexReplaceAll "(.*)[+].*" .Chart.Version "${1}"  }}
+{{- end -}}
+
+{{/*
+Ericsson Product Information Helm Labels
+*/}}
+{{- define "eric-data-object-storage-mn.helm-labels" -}}
+app.kubernetes.io/name: {{ template "eric-data-object-storage-mn.name" . }}
+app.kubernetes.io/version: {{ template "eric-data-object-storage-mn.version" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+helm.sh/chart: {{ template "eric-data-object-storage-mn.chart" . }}
+app: {{ template "eric-data-object-storage-mn.name" . }}
+chart: {{ template "eric-data-object-storage-mn.chart" . }}
+release: {{ .Release.Name }}
+heritage: {{ .Release.Service }}
+{{- end -}}
+
+{{- define "eric-data-object-storage-mn-mgt.helm-labels" -}}
+app.kubernetes.io/name: {{ template "eric-data-object-storage-mn.name" . }}
+app.kubernetes.io/version: {{ template "eric-data-object-storage-mn.version" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+helm.sh/chart: {{ template "eric-data-object-storage-mn.chart" . }}
+app: {{ template "eric-data-object-storage-mn.name" . }}-mgt
+chart: {{ template "eric-data-object-storage-mn.chart" . }}
+release: {{ .Release.Name }}
+heritage: {{ .Release.Service }}
+role: management
+{{- if .Values.labels }}
+{{ toYaml .Values.labels }}
+{{- end }}
+{{- end -}}
+
+{{- define "eric-data-object-storage-mn.logshipper-product-info" }}
+ericsson.com/product-name: "Object Storage MN Helm Chart"
+ericsson.com/product-number: "CXC 174 2822"
+ericsson.com/product-revision: {{ regexReplaceAll "(.*)[+].*" .Chart.Version "${1}"  }}
+{{- end }}
