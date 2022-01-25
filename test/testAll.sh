@@ -228,6 +228,8 @@ create_mn_distributed_tlsoff() {
 replicas=4
 affinity=""
 helm uninstall eric-data-object-storage-mn -n $ns
+sleep 30
+echo "Removing any old ObjectStore Pods and PVC's" 
 for ((i=0;i<=replicas-1;i++)); do
 kubectl delete pvc export-eric-data-object-storage-mn-$i -n $ns
 done
@@ -239,12 +241,10 @@ kubectl label nodes $node allpodstogether=sure
 affinity="--set nodeSelector.allpodstogether=sure"
 antiaffinity='--set affinity.podAntiAffinity=""'
 fi
-helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set credentials.kubernetesSecretName=test-secret --set replicas=$replicas $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=42Gi $affinity $antiaffinity
-#helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set credentials.kubernetesSecretName=test-secret --set replicas=$replicas $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=42Gi $affinity $antiaffinity
-# initial status
-#sleep 300
+helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set credentials.kubernetesSecretName=test-secret --set replicas=$replicas $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=10Gi $affinity $antiaffinity
 sleep 60
 
+echo "Helm installed ObjectStore .. waiting to come up..." 
 statusAll="NotRunning"
 while [ $statusAll != "Running" ];do
 sleep 30
@@ -343,8 +343,8 @@ kubectl cp $testfile $ns/$testpod:/fileToUpload.txt -c eosc
 echo "size of fileToUpload .." >>$result_file
 echo "on node..">>$result_file
 ls -lthr $testfile >>$result_file
-echo "in pod">>$result_file
-kubectl exec -it po/$testpod -c eosc -n $ns -- ls -lh /fileToUpload.txt >>$result_file
+echo "in pod" >>$result_file
+#kubectl exec -it po/$testpod -c eosc -n $ns -- ls -lh /fileToUpload.txt >>$result_file
 # SDK testing
 tcpfile="SDK_python"$basictcpfile
 echo "#### Start SDKpython Test session  #####:" >> $result_file
@@ -624,10 +624,12 @@ create_testpod $nodes
 fi
 }
 basedir=`dirname "$0"`
+resultsdir=$basedir/results
 rel11=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.11.0+19.tgz
 rel14=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.14.0+41.tgz   
 rel15=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.15.0+9.tgz   
-rel15=$basedir/mn15/eric-data-object-storage-mn
+rel19=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.19.0+5.tgz
+#rel15=$basedir/mn15/eric-data-object-storage-mn
 configuration="all"
 tcp="all"
 ssl="all"
@@ -635,7 +637,8 @@ nodes="notsame"
 parallel="3"
 part="0"
 debug="no"
-sizes="1 10 100 200 1000 2000 5000 10000"
+#sizes="1 10 100 200 1000 2000 5000 10000"
+sizes="1 10 100 200 1000"
 #sizes="1 10 100 200" 
 numbertests="5"
 while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k: flag
@@ -662,9 +665,6 @@ do
            exit 0;;
     esac
 done
-if [ -z $basedir ];then
-resultsdir=basedir
-fi
 
 if [ -z $ns ];then
 echo "Using storobj-test as a namespace"
@@ -712,8 +712,10 @@ elif [ $rel == 14 ];then
 helm_rel=$rel14
 elif [ $rel == 15 ];then
 helm_rel=$rel15
+elif [ $rel == 19 ];then
+helm_rel=$rel19
 else
-echo "-r param must currently be 11,14,15"
+echo "-r param must currently be 11,14,15,19"
 exit 1
 fi
 allparams=$configuration"_"$nodes"_Rel"$rel"_"$tcp"_"$ssl"_mem:"$memres","$memlimits"_cpu:"$cpures","$cpulimits"_parall"$parallel"_partsize"$part"_"
