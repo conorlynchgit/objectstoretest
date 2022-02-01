@@ -1,5 +1,13 @@
 #!/bin/bash
-
+description() {
+echo "########################################################################################################################"
+echo "# HA test case for ObjectStore using default configuration (4 Servers/PODS , 1 disk per Server/POD                     #"
+echo "#                                                                                                                      #"
+echo "# Based on this configuration (https://min.io/product/erasure-code-calculator) the following failures can be tolerated #"
+echo "# Write:Max failure tolerance is 1 disk/1 POD failure                                                                  #"
+echo "# Read: Max failure tolerance is 2 disks/2 PODs failure                                                                #"
+echo "########################################################################################################################"
+}
 write_upload() {
 echo ""
 echo "... Attempting to write test .."
@@ -145,6 +153,7 @@ downloadedfile="/fileDownloaded.txt"
 testfile=./fileToUpload.txt
 testpod=$(kubectl get pod -n $ns|grep test-obj-store|awk '{print $1}')
 # common 
+description
 if [ $task == "write" ];then
  wait_all_pods_running
  clear_and_setup_pods_objects
