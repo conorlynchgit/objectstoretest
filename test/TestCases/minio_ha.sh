@@ -1,97 +1,137 @@
 #!/bin/bash
 
 write_upload() {
-echo "... Attempting to write data .."
+echo ""
+echo "... Attempting to write test .."
 kubectl -it exec pod/$testpod -c eosc -n $ns -- python3 /testSDK/file-uploader_tlsoff.py
 echo "...Write Attempt complete..."
 }
-
+read_quick() {
+echo -e "\n################################################################"
+echo "###  Reading data Object from MN to test Client $testpod  ###"
+echo "################################################################"
+kubectl -it exec pod/$testpod -c eosc -n $ns -- python3 /testSDK/file-downloader_tlsoff.py
+}
 read_download() {
 echo "... $numberPodsToDelete PODs are down..Attempting to read object .. "
-kubectl -it exec pod/$testpod -c eosc -n $ns -- python3 /testSDK/file-downloader_tsloff.py
+kubectl -it exec pod/$testpod -c eosc -n $ns -- rm $downloadedfile >/dev/null 2>&1
+echo "... ensure donwload file is not present"
+kubectl -it exec pod/$testpod -c eosc -n $ns -- ls -ltr $downloadedfile
+kubectl -it exec pod/$testpod -c eosc -n $ns -- python3 /testSDK/file-downloader_tlsoff.py
+echo "... ensure donwload file is present"
+kubectl -it exec pod/$testpod -c eosc -n $ns -- ls -ltr $downloadedfile
 echo "...Read complete..."
+set +xv
 }
+
 delete_pods_read() {
 # Delete required PODS
 echo "...Deleting $numberPodsToDelete PODS"
-for j in {1..2};do
+for j in {1..10};do
 for ((i=0;i<=$numberPodsToDelete-1;i++)); do
-echo "Deleting mn-$i ..."
+echo "Re-Deleting mn-$i ..."
 kubectl delete po/eric-data-object-storage-mn-$i -n $ns&
 done
 done
 echo "done..."
 }
-delete_pods() {
+
+setup_pullfailure_pods() {
 # Delete required PODS
-echo "...Deleting $numberPodsToDelete PODS"
+echo -e "\n#############################################################"
+echo "### Creating image pull failure condition for $numberPodsToDelete POD(s) ###"
+echo -e "#############################################################"
+echo ""
 for ((i=0;i<=$numberPodsToDelete-1;i++)); do
-echo "Deleting mn-$i ..."
-kubectl delete po/eric-data-object-storage-mn-$i -n $ns
+echo "Creating an image pull failure condition for  mn-$i ..."
+# insert value 99 in front of image version, so inserts an image 'pull failure'
+kubectl get po/eric-data-object-storage-mn-$i -n storobj-test -o yaml|sed 's/eric-data-object-storage-mn:/eric-data-object-storage-mn:99/'\
+|kubectl replace -f -
 done
 echo "done..."
 }
-wait_for_container_create_state() {
-echo "Wait until deleted pods are re-initialising"
-statusAll="NotContainerCreating"
-echo "Waiting for all deleted PODs to come back into ContainerCreating state..."
-while [ $statusAll != "ContainerCreating" ];do
-statusAll="ContainerCreating"
+
+
+restore_pullfailure_pods() {
+# Delete required PODS
+echo ""
+echo "... Restore POD back to Running state..."
+for ((i=0;i<=$numberPodsToDelete-1;i++)); do
+#kubectl delete po/eric-data-object-storage-mn-$i -n $ns&
+# insert value 99 in front of image version, so inserts an image 'pull failure'
+kubectl get po/eric-data-object-storage-mn-$i -n storobj-test -o yaml|sed 's/eric-data-object-storage-mn:99/eric-data-object-storage-mn:/'\
+|kubectl replace -f -
+done
+#kubectl get po/eric-data-object-storage-mn-0 -n storobj-test -o yaml|grep image
+echo "done..."
+}
+
+wait_for_pods_leaving_running() {
+echo -e  "\n... Wait until $numberPodsToDelete/$replicas PODs are in Failure state ..."
+statusAll="SomeRunning"
+while [ $statusAll != "AllNotRunning" ];do
+statusAll="AllNotRunning"
 for ((i=0;i<=$numberPodsToDelete-1;i++)); do
 status=$(kubectl get pod/eric-data-object-storage-mn-$i  -n $ns --no-headers=true|awk '{print $3}')
-if [ $status != "ContainerCreating" ];then
-statusAll="NotContainerCreating"
+if [ "$status" == "Running" ];then
+statusAll="SomeRunning"
 fi
 echo -n "."
 done
 done
-echo ""
-# echo out state of PODS before test starts
-echo "... Deleted PODS are now ready to start again"
-for ((i=0;i<=$numberPodsToDelete-1;i++)); do
-status=$(kubectl get pod/eric-data-object-storage-mn-$i  -n $ns --no-headers=true|awk '{print $3}')
-echo "\nPOD mn-$i is in state $status"
-done
+echo -e "\n $numberPodsToDelete/$replicas PODs are in Failure state ..." 
 }
 
 clear_and_setup_pods_objects() {
 echo ""
-echo "... Clearing Test DATA from test POD $testpod"
-echo ".... Removing test object file from MN servers (fileToUpload)"
+#echo ".... Removing '/export/testing/fileToUpload' test object from MN servers"
 kubectl -it exec pod/$testpod -c eosc -n storobj-test -- python3 /testSDK/file-remove_tlsoff.py
-echo ".... Setup test files on testpod $testpod"
+#echo ".... Setup test file on testpod $testpod"
 head -c $size"M" /dev/urandom > $testfile
-kubectl cp $testfile $ns/$testpod:/fileToUpload.txt -c eosc
-kubectl -it exec pod/$testpod -c eosc -n $ns -- ls -l /fileToUpload.txt
-kubectl -it exec pod/$testpod -c eosc -n $ns -- rm /fileToDownload.txt >/dev/null 2>&1
-echo " .... Checking that /fileToDownload.txt is removed"
+kubectl cp $testfile $ns/$testpod:/fileToUpload.txt -c eosc >/dev/null 2>&1
+#kubectl -it exec pod/$testpod -c eosc -n $ns -- ls -l /fileToUpload.txt
+kubectl -it exec pod/$testpod -c eosc -n $ns -- rm $downloadedfile >/dev/null 2>&1
+#echo " .... (reading test case..) Checking that /fileToDownload.txt is removed"
 kubectl -it exec pod/$testpod -c eosc -n $ns -- ls -ltr /fileToDownload.txt >/dev/null 2>&1
 }
+
 wait_all_pods_running() {
+echo ""
 echo "...Waiting until all RUNNING...."
 statusAll="NotRunning"
 while [ $statusAll != "Running" ];do
 statusAll="Running"
 for ((i=0;i<=$replicas-1;i++)); do
-status=$(kubectl get -o template pod/eric-data-object-storage-mn-$i --template={{.status.phase}} -n $ns)
+status=$(kubectl get po/eric-data-object-storage-mn-$i -n storobj-test|grep eric-data-object-storage-mn-$i|awk '{print $3}')
 if [ $status != "Running" ];then
 statusAll="NotRunning"
 fi
 done
 done
-kubectl get po -n $ns
+sleep 5
+echo -e "  ... ALL MN PODS are back Running ...\n\n"
 }
-check_pods() {
-echo ""
-echo "... Data Upload status on each POD ...\n"
+
+check_pods_write() {
+echo "########################################"
+echo "###   Data Upload status on each POD ###"
+echo "########################################"
 for ((i=0;i<=$replicas-1;i++)); do
 echo " POD mn-$i ..."
 kubectl -it exec pod/eric-data-object-storage-mn-$i -c eric-data-object-storage-mn -n $ns -- ls -lh /export/testing
 echo ""
 done
-echo "... Data Download status on test client"
-kubectl -it exec pod/$testpod -c eosc -n $ns -- ls -ltr /|grep fileToDownload.txt
+
 }
+
+check_pods_read() {
+echo -e "\n\n#################################################"
+echo "### Check Data Download status on test client ###"
+echo "#################################################"
+kubectl -it exec pod/$testpod -c eosc -n $ns -- ls -ltr $downloadedfile
+#kubectl -it exec pod/$testpod -c eosc -n $ns -- ls -ltr /
+}
+
 if [ -z $1 -o -z $2 ];then
 echo "Usage: minio_ha.sh <number of PODs to delete> <read/write>"
 exit 0
@@ -101,32 +141,38 @@ task=$2
 replicas=4
 size=10
 ns=storobj-test
+downloadedfile="/fileDownloaded.txt"
 testfile=./fileToUpload.txt
 testpod=$(kubectl get pod -n $ns|grep test-obj-store|awk '{print $1}')
 # common 
 if [ $task == "write" ];then
-wait_all_pods_running
-clear_and_setup_pods_objects
-check_pods
-delete_pods
-wait_for_container_create_state
-write_upload
-wait_all_pods_running
-check_pods
+ wait_all_pods_running
+ clear_and_setup_pods_objects
+ echo -e "\n ... Initial Data setup on PODs (before write attempt) ..." 
+ check_pods_write
+ sleep 5
+ setup_pullfailure_pods
+ wait_for_pods_leaving_running
+# wait_for_container_create_state
+ write_upload
+ restore_pullfailure_pods
+ wait_all_pods_running
+ echo " Post Data setup on PODs (after write attempt)" 
+ check_pods_write
 elif [ $task == "read" ];then
-wait_all_pods_running
-clear_and_setup_pods_objects
-check_pods
-#setup data for the read
-write_upload
-wait_all_pods_running
-check_pods
-echo "...Now write data should be in place..delete pods and attempt a read"
-delete_pods
-wait_for_container_create_state
-delete_pods&
-read_download
-wait_all_pods_running
-check_pods
+ wait_all_pods_running
+ clear_and_setup_pods_objects
+echo -e "\n ###################################"
+ echo -e " ###  Setting up data on MN PODS ###"
+echo -e " ###################################"
+ write_upload
+ echo -n "\n ... Initial Data setup on PODs (before read attempt)" 
+ check_pods_read
+ setup_pullfailure_pods
+ wait_for_pods_leaving_running
+ read_quick
+ check_pods_read
+ restore_pullfailure_pods
+ wait_all_pods_running
 fi
 rm $testfile
