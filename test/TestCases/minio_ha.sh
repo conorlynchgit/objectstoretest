@@ -57,6 +57,7 @@ kubectl get po/eric-data-object-storage-mn-$i -n storobj-test -o yaml|sed 's/eri
 |kubectl replace -f -
 done
 echo "done..."
+wait_for_pods_leaving_running
 }
 
 
@@ -72,6 +73,7 @@ kubectl get po/eric-data-object-storage-mn-$i -n storobj-test -o yaml|sed 's/eri
 done
 #kubectl get po/eric-data-object-storage-mn-0 -n storobj-test -o yaml|grep image
 echo "done..."
+wait_all_pods_running
 }
 
 wait_for_pods_leaving_running() {
@@ -161,13 +163,15 @@ if [ $task == "write" ];then
  check_pods_write
  sleep 5
  setup_pullfailure_pods
- wait_for_pods_leaving_running
 # wait_for_container_create_state
  write_upload
  restore_pullfailure_pods
- wait_all_pods_running
  echo " Post Data setup on PODs (after write attempt)" 
+ while [ true ];do
+ date
  check_pods_write
+ sleep 30
+ done
 elif [ $task == "read" ];then
  wait_all_pods_running
  clear_and_setup_pods_objects
@@ -178,10 +182,8 @@ echo -e " ###################################"
  echo -n "\n ... Initial Data setup on PODs (before read attempt)" 
  check_pods_read
  setup_pullfailure_pods
- wait_for_pods_leaving_running
  read_quick
  check_pods_read
  restore_pullfailure_pods
- wait_all_pods_running
 fi
 rm $testfile
