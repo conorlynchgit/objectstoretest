@@ -170,7 +170,7 @@ if [ $task == "write" ];then
  while [ true ];do
  date
  check_pods_write
- sleep 30
+ sleep 60 
  done
 elif [ $task == "read" ];then
  wait_all_pods_running
