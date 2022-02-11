@@ -629,6 +629,7 @@ rel11=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-st
 rel14=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.14.0+41.tgz   
 rel15=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.15.0+9.tgz   
 rel19=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.19.0+5.tgz
+rel20=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.20.0+25.tgz
 #rel15=$basedir/mn15/eric-data-object-storage-mn
 configuration="all"
 tcp="all"
@@ -714,6 +715,8 @@ elif [ $rel == 15 ];then
 helm_rel=$rel15
 elif [ $rel == 19 ];then
 helm_rel=$rel19
+elif [ $rel == 20 ];then
+helm_rel=$rel20
 else
 echo "-r param must currently be 11,14,15,19"
 exit 1

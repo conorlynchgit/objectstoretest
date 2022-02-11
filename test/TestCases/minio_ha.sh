@@ -53,7 +53,7 @@ echo ""
 for ((i=0;i<=$numberPodsToDelete-1;i++)); do
 echo "Creating an image pull failure condition for  mn-$i ..."
 # insert value 99 in front of image version, so inserts an image 'pull failure'
-kubectl get po/eric-data-object-storage-mn-$i -n storobj-test -o yaml|sed 's/eric-data-object-storage-mn:/eric-data-object-storage-mn:99/'\
+kubectl get po/eric-data-object-storage-mn-$i -n $ns -o yaml|sed 's/eric-data-object-storage-mn:/eric-data-object-storage-mn:99/'\
 |kubectl replace -f -
 done
 echo "done..."
@@ -68,10 +68,9 @@ echo "... Restore POD back to Running state..."
 for ((i=0;i<=$numberPodsToDelete-1;i++)); do
 #kubectl delete po/eric-data-object-storage-mn-$i -n $ns&
 # insert value 99 in front of image version, so inserts an image 'pull failure'
-kubectl get po/eric-data-object-storage-mn-$i -n storobj-test -o yaml|sed 's/eric-data-object-storage-mn:99/eric-data-object-storage-mn:/'\
+kubectl get po/eric-data-object-storage-mn-$i -n $ns -o yaml|sed 's/eric-data-object-storage-mn:99/eric-data-object-storage-mn:/'\
 |kubectl replace -f -
 done
-#kubectl get po/eric-data-object-storage-mn-0 -n storobj-test -o yaml|grep image
 echo "done..."
 wait_all_pods_running
 }
@@ -95,7 +94,7 @@ echo -e "\n $numberPodsToDelete/$replicas PODs are in Failure state ..."
 clear_and_setup_pods_objects() {
 echo ""
 #echo ".... Removing '/export/testing/fileToUpload' test object from MN servers"
-kubectl -it exec pod/$testpod -c eosc -n storobj-test -- python3 /testSDK/file-remove_tlsoff.py
+kubectl -it exec pod/$testpod -c eosc -n $ns -- python3 /testSDK/file-remove_tlsoff.py
 #echo ".... Setup test file on testpod $testpod"
 head -c $size"M" /dev/urandom > $testfile
 kubectl cp $testfile $ns/$testpod:/fileToUpload.txt -c eosc >/dev/null 2>&1
@@ -112,7 +111,7 @@ statusAll="NotRunning"
 while [ $statusAll != "Running" ];do
 statusAll="Running"
 for ((i=0;i<=$replicas-1;i++)); do
-status=$(kubectl get po/eric-data-object-storage-mn-$i -n storobj-test|grep eric-data-object-storage-mn-$i|awk '{print $3}')
+status=$(kubectl get po/eric-data-object-storage-mn-$i -n $ns|grep eric-data-object-storage-mn-$i|awk '{print $3}')
 if [ $status != "Running" ];then
 statusAll="NotRunning"
 fi
@@ -148,9 +147,13 @@ exit 0
 fi
 numberPodsToDelete=$1
 task=$2
+ns=$3
 replicas=4
 size=10
-ns=storobj-test
+if [ -z $ns ];then
+echo "Using storobj-test as a namespace"
+ns="storobj-test"
+fi
 downloadedfile="/fileDownloaded.txt"
 testfile=./fileToUpload.txt
 testpod=$(kubectl get pod -n $ns|grep test-obj-store|awk '{print $1}')
@@ -164,13 +167,14 @@ if [ $task == "write" ];then
  sleep 5
  setup_pullfailure_pods
 # wait_for_container_create_state
+ exit 0
  write_upload
  restore_pullfailure_pods
  echo " Post Data setup on PODs (after write attempt)" 
  while [ true ];do
  date
  check_pods_write
- sleep 60 
+ sleep 600 
  done
 elif [ $task == "read" ];then
  wait_all_pods_running
