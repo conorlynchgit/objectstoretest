@@ -515,34 +515,6 @@ fi
 }
 
 set_kernel_default() {
-for node in `kubectl get nodes -o wide|grep worker|awk '{print $6}'`;do
-ssh $node sudo sysctl fs.file-max=3282480
-ssh $node sudo sysctl vm.swappiness=60
-ssh $node sudo sysctl vm.vfs_cache_pressure=100
-ssh $node sudo sysctl vm.min_free_kbytes=22946
-ssh $node sudo sysctl net.core.rmem_max=212992
-ssh $node sudo sysctl net.core.wmem_max=212992
-ssh $node sudo sysctl net.core.rmem_default=212992
-ssh $node sudo sysctl net.core.wmem_default=212992
-ssh $node sudo sysctl net.core.netdev_budget=300
-ssh $node sudo sysctl net.core.optmem_max=20480
-ssh $node sudo sysctl net.core.somaxconn=128
-ssh $node sudo sysctl net.core.netdev_max_backlog=1000
-ssh $node sudo sysctl net.ipv4.tcp_rmem=\'4096 87380 6291456\'
-ssh $node sudo sysctl net.ipv4.tcp_wmem=\'4096 16384 4194304\'
-ssh $node sudo sysctl net.ipv4.tcp_low_latency=0
-ssh $node sudo sysctl net.ipv4.tcp_adv_win_scale=1
-ssh $node sudo sysctl net.ipv4.tcp_max_syn_backlog=1024
-ssh $node sudo sysctl net.ipv4.tcp_max_tw_buckets=131072
-ssh $node sudo sysctl net.ipv4.tcp_tw_reuse=0
-ssh $node sudo sysctl net.ipv4.tcp_fin_timeout=60
-ssh $node sudo sysctl net.ipv4.conf.all.send_redirects=0
-ssh $node sudo sysctl net.ipv4.conf.all.accept_redirects=0
-ssh $node sudo sysctl net.ipv4.conf.all.accept_source_route=0
-ssh $node sudo sysctl net.ipv4.tcp_mtu_probing=2
-sleep 2
-done
-lastnode=$node
 # Also remove the allpodstogether label from al the nodes
 # remove allpodstogether label put at start of script
 for node in `kubectl get nodes |grep worker|awk '{print $1}'`;do
@@ -630,10 +602,9 @@ rel14=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-st
 rel15=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.15.0+9.tgz   
 rel19=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.19.0+5.tgz
 rel20=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.20.0+25.tgz
-#rel15=$basedir/mn15/eric-data-object-storage-mn
-configuration="all"
-tcp="all"
-ssl="all"
+configuration="dist"
+tcp="def"
+ssl="tls-off"
 nodes="notsame"
 parallel="3"
 part="0"
@@ -641,7 +612,6 @@ debug="no"
 #sizes="1 10 100 200 1000 2000 5000 10000"
 sizes="1 10 100 200 1000"
 #sizes="1 10 100 200" 
-numbertests="5"
 while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k: flag
 do
     case "${flag}" in
@@ -661,7 +631,6 @@ do
         k) selectednode="${OPTARG}";; 
         e) ns="${OPTARG}";; 
         r) rel="${OPTARG}";; 
-        t) numbertests="${OPTARG}";; 
         *) usage
            exit 0;;
     esac

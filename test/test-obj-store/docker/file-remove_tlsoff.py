@@ -3,14 +3,19 @@ from minio.error import S3Error
 import os
 
 def main():
+
     os.environ["SSL_CERT_FILE"] ="/etc/pki/trust/anchors/root_ca.pem"
+    dns_name=os.environ["STORAGE_SERVER_DNS"]
+    dns_name=dns_name+":9000"
+    bucketname=os.environ["BUCKET_NAME"]
     client = Minio(
-        "eric-data-object-storage-mn:9000",
-        access_key="AKIAIOSFODNN7EXAMPLE",
-        secret_key="wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY",
+        dns_name,
+        access_key=os.environ["MINIO_ACCESS_KEY"],
+        secret_key=os.environ["MINIO_SECRET_KEY"],
         secure=False
     )
-    client.remove_object("testing", "uploadedFile")
+
+    client.remove_object(bucketname, "uploadedFile")
 
     print(
         "successfully removed (tls=off)"
