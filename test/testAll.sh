@@ -369,11 +369,17 @@ kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/create-buc
 kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/file-remove_tlsoff.py" >/dev/null 2>&1
 sleep 5
 echo "#### Start Test $i now   #####:" >> $result_file
-current_time=$(time (kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/$sdkpython" >/dev/null 2>&1) 2>&1)
+start=`date +%s.%N`
+kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/$sdkpython" >/dev/null 2>&1
+end=`date +%s.%N`
+runtime=$( echo "$end - $start" | bc -l )
+current_throughput=$(echo "scale=2;$size/$runtime"|bc -l)
+current_time=$current_throughput
+echo "Throughput for file size $size is $current_time" >> $result_file
+echo "Throughput for file size $size is $current_time" 
+#current_time=$(time (kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/$sdkpython" >/dev/null 2>&1) 2>&1)
 # convert to MB/s
-current_time=$(echo "scale=2;$size/$current_time"|bc -l)
-echo "Throughput is $current_time"
-echo "Throughput is $current_time" >> $result_file
+#command=$(kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/$sdkpython")
  if [ $debug == "yes" ];then
   pid=$(kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "ps -ef|grep 'tcpdump --buffer-size'|egrep -v 'sh|grep'"|awk '{print $1}')
   kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "kill -9 $pid"
@@ -587,6 +593,7 @@ create_testpod $nodes
 run_tests $size "ver_"$rel"_Dist_"$size"mb_"$nodes"_Nodes_"$currtcp"_tlsON""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part "tls-on"
  done
 else
+# If -j=yes then dont create mn, just create test pod
 create_mn_distributed_tlsoff $nodes 
 create_testpod $nodes
 # run tests for PODS on different nodes
@@ -595,8 +602,9 @@ create_testpod $nodes
  done
 fi
 }
-basedir=`dirname "$0"`
-resultsdir=$basedir/results
+#basedir=`dirname "$0"`
+basedir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+resultsdir=$basedir/
 rel11=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.11.0+19.tgz
 rel14=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.14.0+41.tgz   
 rel15=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.15.0+9.tgz   
@@ -609,8 +617,8 @@ nodes="notsame"
 parallel="3"
 part="0"
 debug="no"
-#sizes="1 10 100 200 1000 2000 5000 10000"
-sizes="1 10 100 200 1000"
+sizes="1 10 100 200 1000 2000 5000 10000"
+#sizes="1 10 100 200 1000"
 #sizes="1 10 100 200" 
 while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k: flag
 do
@@ -709,8 +717,8 @@ echo "Parameters:">>$result_file
 echo "Configuration (-c sa/dist) :  $configuration">>$result_file
 echo "SSL  (-s tls-on/tls-off) :  $ssl">>$result_file
 echo "TCP (-t def/chg ) :  $tcp">>$result_file
-echo "CPU (-p 4000m ) :  $cpulimits">>$result_file
-echo "MEM (-m 5120Mi ) : $memlimits">>$result_file
+echo "CPU  :  $cpulimits">>$result_file
+echo "MEM  : $memlimits">>$result_file
 echo "Parallel (-a ): $parallel">>$result_file
 echo "Part Size (-l  ) : $part">>$result_file
 echo "Release (-r  ) : $helm_rel">>$result_file
