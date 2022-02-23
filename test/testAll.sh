@@ -13,6 +13,7 @@ echo "-d 'yes' (create debug logs )"
 echo "-f '200' (size of file (MB) to create )"
 echo "-e 'testnamespace' ( namespace )"
 echo "-r 'Object store main release (11 / 14)"
+echo "-x 'yes' (if there is an existing deployment for testing)"
 }
 mgt_trace_setup() {
 kubectl exec pod/$mgtpod -n $ns  -- bash -c "mc config --insecure host add myminio http://eric-data-object-storage-mn:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY"
@@ -594,7 +595,9 @@ run_tests $size "ver_"$rel"_Dist_"$size"mb_"$nodes"_Nodes_"$currtcp"_tlsON""_mem
  done
 else
 # If -j=yes then dont create mn, just create test pod
-create_mn_distributed_tlsoff $nodes 
+if [ -z $existing_depl ];then
+create_mn_distributed_tlsoff $nodes
+fi
 create_testpod $nodes
 # run tests for PODS on different nodes
  for size in $sizes;do
@@ -617,10 +620,11 @@ nodes="notsame"
 parallel="3"
 part="0"
 debug="no"
+# default is to test in an empty namespace, create ObjectStore and testpod
 sizes="1 10 100 200 1000 2000 5000 10000"
 #sizes="1 10 100 200 1000"
 #sizes="1 10 100 200" 
-while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k: flag
+while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k:x: flag
 do
     case "${flag}" in
         c) configuration="${OPTARG}";;
@@ -639,10 +643,24 @@ do
         k) selectednode="${OPTARG}";; 
         e) ns="${OPTARG}";; 
         r) rel="${OPTARG}";; 
+        x) existing_depl="${OPTARG}";; 
         *) usage
            exit 0;;
     esac
 done
+if [ $existing_depl == "yes" ]; then
+echo "exting depl selected, need a namespace"
+if [ -z $ns ];then
+ echo "Existing depl selected, but no namepace selected"
+ exit 1
+else
+echo "You have selected to test on an exising deployment on namespace $ns"
+echo "Please ensure that the 'values' file is correctly set towards this namespace"
+echo "Continue <enter> "
+read a
+fi
+
+fi
 
 if [ -z $ns ];then
 echo "Using storobj-test as a namespace"
@@ -695,7 +713,7 @@ helm_rel=$rel19
 elif [ $rel == 20 ];then
 helm_rel=$rel20
 else
-echo "-r param must currently be 11,14,15,19"
+echo "-r param must currently be 11,14,15,19,20"
 exit 1
 fi
 allparams=$configuration"_"$nodes"_Rel"$rel"_"$tcp"_"$ssl"_mem:"$memres","$memlimits"_cpu:"$cpures","$cpulimits"_parall"$parallel"_partsize"$part"_"

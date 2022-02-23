@@ -14,7 +14,7 @@ credentials:
 environment:
   STORAGE_SERVER_DNS: eric-data-object-storage-mn
 #  STORAGE_SERVER_DNS: eric-eo-cm-object-storage-mn
-bucketname: codybucket
+bucketname: testing
 global:
   registry:
     pullSecret: ""
@@ -27,7 +27,7 @@ imageCredentials:
   repopath: proj-eo-cm/bandits
 images:
   name: objectpoc
-  tag: 22
+  tag: 26
 mountedPath: /tmp
 nodeSelector:
   allpodstogether: surevals 
