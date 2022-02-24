@@ -30,8 +30,6 @@ spec:
         image: armdocker.rnd.ericsson.se/proj-eo-cm/bandits/objectpoc:26
         imagePullPolicy: IfNotPresent
         volumeMounts:
-          - name: nfsvol 
-            mountPath: /test-nfs
           - name: pvcvol
             mountPath: /test-pvc
           - name: host-path
@@ -69,9 +67,6 @@ spec:
       nodeSelector:
         allpodstogether: sure
       volumes:
-        - name: nfsvol
-          persistentVolumeClaim:
-            claimName: nfs-pvc
         - name: pvcvol 
           persistentVolumeClaim:
             claimName: pvcclaim

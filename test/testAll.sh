@@ -600,9 +600,11 @@ create_mn_distributed_tlsoff $nodes
 fi
 create_testpod $nodes
 # run tests for PODS on different nodes
+for part in $multiparts;do
  for size in $sizes;do
   run_tests $size "ver_"$rel"_Dist_"$size"mb_"$nodes"_Nodes_"$currtcp"_tlsOFF""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part "tls-off"
  done
+done
 fi
 }
 #basedir=`dirname "$0"`
@@ -621,7 +623,8 @@ parallel="3"
 part="0"
 debug="no"
 # default is to test in an empty namespace, create ObjectStore and testpod
-sizes="1 10 100 200 1000 2000 5000 10000"
+sizes="1 10 100 200 1000 2000 5000 10000 20000"
+multiparts="5"
 #sizes="1 10 100 200 1000"
 #sizes="1 10 100 200" 
 while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k:x: flag
@@ -637,7 +640,7 @@ do
         v) cpures="${OPTARG}";; 
         b) resultsdir="${OPTARG}";; 
         a) parallel="${OPTARG}";; 
-        l) part="${OPTARG}";; 
+        l) multiparts="${OPTARG}";; 
         d) debug="${OPTARG}";; 
         f) sizes="${OPTARG}";; 
         k) selectednode="${OPTARG}";; 
