@@ -1,0 +1,48 @@
+{{- $global := fromJson (include "eric-data-object-storage-mn.global" .) -}}
+{{- if and $global.security.tls.enabled (not .Values.tls.certSecret) }}
+apiVersion: com.ericsson.sec.tls/v1alpha1
+kind: ServerCertificate
+metadata:
+  name: {{ template "eric-data-object-storage-mn.fullname" . }}-cert
+  labels:
+    {{- include "eric-data-object-storage-mn.helm-labels" . | nindent 4 }}
+  annotations:
+    {{- include "eric-data-object-storage-mn.helm-annotations" . | nindent 4 }}
+    {{- if .Values.metadata.annotations }}
+    {{ toYaml .Values.metadata.annotations | trim | nindent 4 }}
+    {{- end }}
+spec:
+  # Required
+  # The secret name where SIP-TLS is storing our certificate
+  generated-secret-name: {{ template "eric-data-object-storage-mn.fullname" . }}-cert
+
+  # Required
+  # The common name (and the derived SANs) populated in the certificate
+  common-name: {{ template "eric-data-object-storage-mn.fullname" . }}
+
+  # Required
+  # The time to live of the certificate (in seconds). We override the default certificate
+  # time-to-live in order to avoid deadlock when cluster is down. Since SIP-TLS
+  # is dependent on KMS, if the KMS certificate expires then SIP-TLS can no longer
+  # provision certificates. It would require manual intervention.
+  # Set to one week default.
+  # The value of `override-ttl` must be greater than or equal to 1 day(86400).
+  override-ttl: 604800
+
+  # Optional
+  # List of additonal DNS names to populate into subject alt name field
+  # By default, the following SANs are pre-populated:
+  # - DNS:<common-name>
+  # - DNS:<common-name>.<namespace>,
+  # - DNS:<common-name>.<namespace>.svc,
+  # - DNS:<common-name>.<namespace>.svc.cluster,
+  # - DNS:<common-name>.<namespace>.svc.cluster.local
+  additional-sans:
+  - DNS:certified-scrape-target
+  - DNS:*.{{ template "eric-data-object-storage-mn.fullname" . }}-svc
+  - DNS:*.{{ template "eric-data-object-storage-mn.fullname" . }}-svc.{{ .Release.Namespace }}
+  - DNS:*.{{ template "eric-data-object-storage-mn.fullname" . }}-svc.{{ .Release.Namespace }}.svc
+  - DNS:*.{{ template "eric-data-object-storage-mn.fullname" . }}-svc.{{ .Release.Namespace }}.svc.cluster
+  - DNS:*.{{ template "eric-data-object-storage-mn.fullname" . }}-svc.{{ .Release.Namespace }}.svc.cluster.local
+{{- end }}
+
