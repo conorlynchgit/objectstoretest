@@ -10,10 +10,9 @@ clusterConfig:
     size: 20Gi
 credentials:
 #  kubernetesSecretName: test-secret
-  kubernetesSecretName: eric-eo-cm-object-storage-access
+   kubernetesSecretName: eric-eo-object-store-cred
 environment:
-#  STORAGE_SERVER_DNS: eric-data-object-storage-mn
-  STORAGE_SERVER_DNS: eric-eo-cm-object-storage-mn
+  STORAGE_SERVER_DNS: eric-data-object-storage-mn
 bucketname: testing
 global:
   registry:
