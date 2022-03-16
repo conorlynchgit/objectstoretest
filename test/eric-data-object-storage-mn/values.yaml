@@ -1,3 +1,8 @@
+drivesPerNode: 4
+persistence:
+  enabled: true
+  subPath: ""
+pools: 1
 # Default values for the object storage service.
 # ---
 #global:

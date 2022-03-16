@@ -9,8 +9,8 @@ clusterConfig:
     mountPath: /conor/
     size: 20Gi
 credentials:
-#  kubernetesSecretName: test-secret
-   kubernetesSecretName: eric-eo-object-store-cred
+   kubernetesSecretName: test-secret
+#   kubernetesSecretName: eric-eo-object-store-cred
 environment:
   STORAGE_SERVER_DNS: eric-data-object-storage-mn
 bucketname: testing

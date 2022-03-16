@@ -1,4 +1,11 @@
 {{- $global := fromJson (include "eric-data-object-storage-mn.global" .) -}}
+# need to setup variables to run within range loops
+{{ $drivesPerNode := .Values.drivesPerNode | int }}
+{{ $mountPath := .Values.mountPath }}
+{{ $subPath := .Values.persistentVolumeClaim.subPath }}
+{{ $storageClass := .Values.storageClass }}
+{{ $psize := .Values.persistentVolumeClaim.size }}
+{{ $volnameprefix := .Values.persistentVolumeClaim.volumeNamePrefix }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -69,16 +76,25 @@ spec:
               drop:
                 - all
           tty: true
-          command: [ "/sbin/minio.sh","{{ .Values.mode }}","{{ $global.security.tls.enabled }}","{{ .Values.mountPath }}","{{ template `eric-data-object-storage-mn.fullname` $ }}","{{ $.Release.Namespace }}","{{ $.Values.clusterDomain }}","{{ .Values.replicas }}","{{ has "applicationLevel" $global.log.outputs }}" ]
+          command: [ "/scripts/minio.sh" ]
+          args: [ "{{ .Values.mode }}","{{ $global.security.tls.enabled }}","{{ .Values.mountPath }}","{{ template `eric-data-object-storage-mn.fullname` $ }}","{{ $.Release.Namespace }}","{{ $.Values.clusterDomain }}","{{ .Values.replicas }}","{{ has "applicationLevel" $global.log.outputs }}","{{ .Values.drivesPerNode }}" ]
           volumeMounts:
+            - name: wrapper
+              mountPath: /scripts 
       {{- if has "applicationLevel" $global.log.outputs }}
           {{- include "eric-data-object-storage-mn.logshipper-storage-path" . | indent 12 }}
       {{- end }}
+            {{- if (gt $drivesPerNode 1) }}
+            {{- range $i := until $drivesPerNode }}
+            - name: {{ $volnameprefix }}-{{ $i }}
+              mountPath: {{ $mountPath }}-{{ $i }}
+              subPath: {{ $subPath }}
+            {{- end }}
+            {{- else }}
             - name: {{ .Values.persistentVolumeClaim.volumeNamePrefix }}
-              mountPath: {{ .Values.mountPath }}
-              {{- if .Values.persistentVolumeClaim.subPath }}
-              subPath: "{{ .Values.persistentVolumeClaim.subPath }}"
-              {{- end }}
+              mountPath: {{ $mountPath }}
+              subPath: {{ $subPath }}
+            {{- end }}
             {{- if $global.security.tls.enabled }}
             - name: cert-secret-volume
               mountPath: /minio/tls_certs
@@ -210,20 +226,38 @@ spec:
             - key: {{ .Values.keyManagement.tls.caCert | quote }}
               path: ca.crt
         {{- end }}
+        - name: wrapper
+          configMap:
+            name: wrapper
+            defaultMode: 0777
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds.osmn }}
       {{if .Values.topologySpreadConstraints.osmn -}}
       topologySpreadConstraints:
         {{- toYaml .Values.topologySpreadConstraints.osmn | trim | nindent 8 }}
       {{- end }}
   volumeClaimTemplates:
+  {{- if gt $drivesPerNode 1 }}
+    {{- range $diskId := until $drivesPerNode}}
+    - metadata:
+        name: {{ $volnameprefix }}-{{ $diskId }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if $storageClass }}
+        storageClassName: {{ $storageClass }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $psize }}
+    {{- end }}
+  {{- else }}
     - metadata:
         name: {{ .Values.persistentVolumeClaim.volumeNamePrefix }}
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        {{- if .Values.persistentVolumeClaim.storageClassName }}
-        storageClassName: {{ .Values.persistentVolumeClaim.storageClassName | quote }}
+        {{- if $storageClass }}
+        storageClassName: {{ $storageClass }}
         {{- end }}
         resources:
           requests:
-            storage: {{ .Values.persistentVolumeClaim.size }}
-
+            storage: {{ $psize }}
+  {{- end }}
