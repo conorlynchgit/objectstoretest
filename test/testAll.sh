@@ -225,15 +225,14 @@ echo "############################################################" >> $result_f
 
 
 create_mn_distributed_tlsoff() {
-replicas=4
 affinity=""
 helm uninstall eric-data-object-storage-mn -n $ns
 sleep 30
-echo "Removing any old ObjectStore Pods and PVC's" 
+echo "Removing any old ObjectStore Pods and PVC's">>$result_file 
 for i in $(kubectl get pvc -n $ns|grep 'data-object-storage'|awk '{print $1}');do
 kubectl delete pvc $i -n $ns >/dev/null 2>&1
 done
-sleep 120
+sleep 60 
 clearnodes
 if [ $1 == "same" ];then
 node=$selectednode
@@ -241,10 +240,10 @@ kubectl label nodes $node allpodstogether=sure
 affinity="--set nodeSelector.allpodstogether=sure"
 antiaffinity='--set affinity.podAntiAffinity=""'
 fi
-helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set drivesPerNode=$drives --set credentials.kubernetesSecretName=test-secret --set replicas=$replicas $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=10Gi $affinity $antiaffinity
+helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set drivesPerNode=$drives --set credentials.kubernetesSecretName=test-secret --set replicas=$replica $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=20Gi $affinity $antiaffinity
 sleep 60
 
-echo "Helm installed ObjectStore .. waiting to come up..." 
+echo "Helm installed ObjectStore .. waiting to come up...">>$result_file 
 statusAll="NotRunning"
 while [ $statusAll != "Running" ];do
 sleep 30
@@ -596,13 +595,17 @@ else
 # If -j=yes then dont create mn, just create test pod
 if [ -z $existing_depl ];then
   create_testpod $nodes
+  for replica in $replicas;do
   for drives in $drivespernode;do
     create_mn_distributed_tlsoff $nodes
-      for part in $multiparts;do
-        for size in $sizes;do
-          run_tests $size "ver_"$rel"_Dist_"$size"mb_""_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_tlsOFF""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part "tls-off"
+      for parallel in $parallellist;do
+        for part in $multiparts;do
+          for size in $sizes;do
+            run_tests $size "ver_"$rel"_Dist_"$size"mb_""Replicas_"$replica"_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_tlsOFF""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part "tls-off"
+          done
         done
       done
+  done
   done
 else
   create_testpod $nodes
@@ -627,16 +630,17 @@ configuration="dist"
 tcp="def"
 ssl="tls-off"
 nodes="notsame"
-parallel="3"
+parallellist="3"
 part="0"
 debug="no"
 # default is to test in an empty namespace, create ObjectStore and testpod
 sizes="1 10 100 200 1000 2000 5000 10000 20000"
 multiparts="5"
 drivespernode="1" 
+replicas=4
 #sizes="1 10 100 200 1000"
 #sizes="1 10 100 200" 
-while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k:x:g: flag
+while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k:x:g:h: flag
 do
     case "${flag}" in
         c) configuration="${OPTARG}";;
@@ -648,7 +652,7 @@ do
         u) memres="${OPTARG}";; 
         v) cpures="${OPTARG}";; 
         b) resultsdir="${OPTARG}";; 
-        a) parallel="${OPTARG}";; 
+        a) parallellist="${OPTARG}";; 
         l) multiparts="${OPTARG}";; 
         d) debug="${OPTARG}";; 
         f) sizes="${OPTARG}";; 
@@ -657,6 +661,7 @@ do
         r) rel="${OPTARG}";; 
         x) existing_depl="${OPTARG}";; 
         g) drivespernode="${OPTARG}";; 
+        h) replicas="${OPTARG}";; 
         *) usage
            exit 0;;
     esac
