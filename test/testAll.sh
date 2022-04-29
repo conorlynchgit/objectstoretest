@@ -670,10 +670,11 @@ if [ $existing_depl == "yes" ]; then
 echo "exting depl selected, need a namespace"
 if [ -z $ns ];then
  echo "Existing depl selected, but no namepace selected"
+ echo "Need a -e parameter set"
  exit 1
 else
 echo "You have selected to test on an exising deployment on namespace $ns"
-echo "Please ensure that the 'values' file is correctly set towards this namespace"
+echo "Please ensure that the ./test-obj-store/values.yaml file is correctly set towards this namespace"
 echo "Continue <enter> "
 read a
 fi
