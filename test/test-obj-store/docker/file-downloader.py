@@ -6,7 +6,7 @@ def main():
     # before running script , create file (or whatever size) called /fileToUpload.txt
     # e.g for 100MB file .. head -c 100MB /dev/urandom >/fileToUpload.txt
     filetodownload="/fileDownloaded.txt"
-    os.environ["SSL_CERT_FILE"] ="/etc/pki/trust/anchors/root_ca.pem"
+    os.environ["SSL_CERT_FILE"] ="/etc/pki/trust/anchors/cacertbundle.pem"
     dns_name=os.environ["STORAGE_SERVER_DNS"]
     dns_name=dns_name+":9000"
     bucketname=os.environ["BUCKET_NAME"]
@@ -14,7 +14,7 @@ def main():
         dns_name,
         access_key=os.environ["MINIO_ACCESS_KEY"],
         secret_key=os.environ["MINIO_SECRET_KEY"],
-        secure=False
+        secure=os.environ["TLS_ENABLED"]
     )
 
 

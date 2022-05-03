@@ -194,32 +194,11 @@ echo "###########################################################" >> $result_fi
 }
 
 create_mn_distributed() {
-replicas=4
-helm uninstall eric-data-object-storage-mn -n $ns
-for ((i=0;i<=$replicas-1;i++)); do
-kubectl delete pvc export-eric-data-object-storage-mn-$i -n $ns
-done
-sleep 120
-helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set credentials.kubernetesSecretName=test-secret --set replicas=$replicas $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=true --set global.security.tls.enabled=true --set persistentVolumeClaim.size=40Gi
-# initial status
-#sleep 300
-sleep 60
-
-statusAll="NotRunning"
-while [ $statusAll != "Running" ];do
-sleep 30
-statusAll="Running"
-for ((i=0;i<=$replicas-1;i++)); do
-status=$(kubectl get -o template pod/eric-data-object-storage-mn-$i --template={{.status.phase}} -n $ns)
-if [ $status != "Running" ];then
-statusAll="NotRunning"
+if [ $1 == "tls-off" ]; then
+create_mn_distributed_tlsoff $2
+else
+create_mn_distributed_tlson $2
 fi
-done
-done
-echo "All MN servers are  running..."
-echo "############################################################" >> $result_file
-echo "#########     Distributed:TLS=ON                 ###########" >> $result_file
-echo "############################################################" >> $result_file
 }
 
 
@@ -317,15 +296,7 @@ size=$1
 basictcpfile=$2
 tls_setting=$3
 \rm -rf $servertmp >/dev/null 2>&1
-if [ "$tls_setting" == "tls-on" ];then
- echo "Running tests for TLS=on mode" >>$result_file
- benchhttp="https"
- sdkpython="file-uploader.py"
-else
- echo "Running tests for TLS=off mode" >>$result_file
- benchhttp="http"
- sdkpython="file-uploader_tlsoff.py"
-fi
+sdkpython="file-uploader.py"
    
 # update the test scripts according to parallel,part_size options
 # part size is MB * 1024 *1024
@@ -350,7 +321,7 @@ echo "#### Start SDKpython Test session  #####:" >> $result_file
 for i in {1..1}; do
 sleep 5 
 echo "SDK python test $i" >> $result_file
-if [ $ssl == "tls-off" ];then
+###############if [ $ssl == "tls-off" ];then
  if [ $debug == "yes" ];then
 
  kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "tcpdump --buffer-size=6144 -s 0 -w /$tcpfile &"
@@ -364,8 +335,8 @@ if [ $ssl == "tls-off" ];then
 # get the tracefiles created on mgt pod
  mgt_trace_setup
  fi
-kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/create-bucker_tlsoff.py" >/dev/null 2>&1
-kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/file-remove_tlsoff.py" >/dev/null 2>&1
+kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/create-bucker.py" >/dev/null 2>&1
+kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/file-remove.py" >/dev/null 2>&1
 sleep 5
 echo "#### Start Test $i now   #####:" >> $result_file
 start=`date +%s.%N`
@@ -434,89 +405,8 @@ echo "Min time is now $min_time"
 echo "Max time is now $max_time"
 
 # only above is for 200MB files
-fi
+###############fi
 done
-echo "#### Stop Test session  #####:" >> $result_file
-echo "#### Start S3-benchmark Test session  #####:" >> $result_file
-# s3-benchmark testing
-tcpfile="S3-bench"$basictcpfile
-# S3-benchmark testing
-benchtest="off"
-# dont do this for now .. will fix later
-if [ $benchtest == "on" ];then
-
-for i in {1..1}; do
-sleep 5
-echo "S3 Bench python test $i" >> $result_file
-if [ $ssl == "tls-off" ];then
- if [ $debug == "yes" ];then
-  kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "tcpdump --buffer-size=6144 -s 0 -w /$tcpfile &"
-# setup tests on the servers and mgt pod
-  for ((i=0;i<=$replicas-1;i++)); do
-  $basedir/get_traces2.sh eric-data-object-storage-mn-$i
-  done
-  mgtpod=$(kubectl get po -n $ns|grep eric-data-object-storage-mn-mgt|awk '{print $1}')
-  $basedir/get_traces2.sh $mgtpod
- fi
-kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "/s3-benchmark/s3-benchmark -t 5 -d 1 -z 200 -a AKIAIOSFODNN7EXAMPLE -s wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY -u $benchhttp://eric-data-object-storage-mn:9000" >$testdir/tstfile
-current_time=$(cat $testdir/tstfile |grep PUT|grep PUT|awk '{print $12}'|sed s'/MB\/sec,'//g)
-rm $testdir/tstfile
-echo "Time in seconds is $current_time"
-echo "Time in seconds is $current_time" >> $result_file
- if [ $debug == "yes" ];then
-  pid=$(kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "ps -ef|grep 'tcpdump --buffer-size'|egrep -v 'sh|grep'"|awk '{print $1}')
-  kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "kill -9 $pid"
-# wait for 30 secs to ensure that the server and mgt tcpdumps are complete
-  sleep 30
-# get tcpdump for mn and mgt pods
-  \rm -rf $servertmp >/dev/null 2>&1
-  mkdir $servertmp
-  for ((i=0;i<=$replicas-1;i++)); do
-  workerip=$(kubectl get pod/eric-data-object-storage-mn-$i -n $ns -o json|grep '\"hostIP'|awk -F ':' '{print $2}'|awk -F ',' '{print $1}'|awk -F '"' '{print $2}')
-  scp $workerip:~/eric-data-object-storage-mn-$i.pcap $servertmp
-  ssh $workerip "rm ~/eric-data-object-storage-mn-$i.pcap"
-  done
-# get mgt tcpump
-  workerip=$(kubectl get pod/$mgtpod -n $ns -o json|grep '\"hostIP'|awk -F ':' '{print $2}'|awk -F ',' '{print $1}'|awk -F '"' '{print $2}')
-  scp $workerip:~/$mgtpod.pcap $servertmp
-  ssh $workerip "rm ~/$mgtpod.pcap"
-  fi
-update_min_max
-touch $testdir/$current_time"mbs__"$tcpfile
-kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "rm /$tcpfile" >/dev/null 2>&1
-if [ $i == 1 ];then
-max_time=$current_time
-min_time=$current_time
-fi
-
-number=$(ls $testdir/*$tcpfile | wc -l)
-if [ $number -eq 2 ] && [ "$current_time" \< "$min_time" ];then
-min_time=$current_time
-elif [ $number -eq 2 ] && [ "$current_time" \> "$max_time" ];then
-max_time=$current_time
-fi
-
-echo "min time is $min_time"
-echo "max time is $max_time"
-echo "number is $number"
-if [ $number -gt 2 ] && [ "$current_time" \< "$min_time" ];then
- rm $testdir/$min_time"mbs__"$tcpfile
- min_time=$current_time
-elif [ $number -gt 2 ] && [ "$current_time" \> "$max_time" ];then
- rm $testdir/$max_time"mbs__"$tcpfile
- max_time=$current_time
-elif [ $number -gt 2 ]; then
-# remove this tcpdump file as not a max or min
- rm $testdir/$current_time"mbs__"$tcpfile
-fi
-echo "Min time is now $min_time"
-echo "Max time is now $max_time"
-
-# only above is for 200MB files
-fi
-done
-echo "#########  Stop Test Session  ######################" >> $result_file
-fi
 }
 
 set_kernel_default() {
@@ -585,23 +475,18 @@ print_kernel
 fi
 }
 test_all_distributed() {
-if [ "$1" == "tls-on"  ]; then
-create_mn_distributed $nodes
-create_testpod $nodes
- for size in $sizes;do
-run_tests $size "ver_"$rel"_Dist_"$size"mb_"$nodes"_Nodes_"$currtcp"_tlsON""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part "tls-on"
- done
-else
-# If -j=yes then dont create mn, just create test pod
+# cleanup later
+
+#tls-off
 if [ -z $existing_depl ];then
   create_testpod $nodes
   for replica in $replicas;do
   for drives in $drivespernode;do
-    create_mn_distributed_tlsoff $nodes
+    create_mn_distributed $1 $nodes
       for parallel in $parallellist;do
         for part in $multiparts;do
           for size in $sizes;do
-            run_tests $size "ver_"$rel"_Dist_"$size"mb_""Replicas_"$replica"_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_tlsOFF""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part "tls-off"
+            run_tests $size "ver_"$rel"_Dist_"$size"mb_""Replicas_"$replica"_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_tcpSetting""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part""$1 $1
           done
         done
       done
@@ -609,14 +494,25 @@ if [ -z $existing_depl ];then
   done
 else
   create_testpod $nodes
-# run tests for PODS on different nodes
-  for part in $multiparts;do
-    for size in $sizes;do
-      run_tests $size "ver_"$rel"_Dist_"$size"mb_""_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_tlsOFF""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part "tls-off"
-    done
+  for replica in $replicas;do
+  for drives in $drivespernode;do
+      for parallel in $parallellist;do
+        for part in $multiparts;do
+          for size in $sizes;do
+            run_tests $size "ver_"$rel"_Dist_"$size"mb_""Replicas_"$replica"_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_tcpSetting""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part""$1 $1
+          done
+        done
+      done
+  done
   done
 fi
-fi
+
+
+
+
+
+
+
 }
 #basedir=`dirname "$0"`
 basedir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
@@ -686,9 +582,24 @@ echo "Using storobj-test as a namespace"
 ns="storobj-test"
 fi
 
-if [ -z $rel ];then
+if [ -z $rel -a -z $existing_depl ];then
 echo "Missing -r <Object Store main release>"
 exit 1
+elif [ -n $rel -a -z $existing_depl ];then
+ if [ $rel == 11 ];then
+ helm_rel=$rel11
+ elif [ $rel == 14 ];then
+ helm_rel=$rel14
+ elif [ $rel == 15 ];then
+ helm_rel=$rel15
+ elif [ $rel == 19 ];then
+ helm_rel=$rel19
+ elif [ $rel == 20 ];then
+ helm_rel=$rel20
+ else
+ echo "-r param must currently be 11,14,15,19,20"
+ exit 1
+ fi
 fi
 if [ ! -z $memlimits ];then
 #   not taking the defaults
@@ -718,23 +629,6 @@ else
  cpures="def_cpu_res"
 fi
 
-
-
-
-if [ $rel == 11 ];then
-helm_rel=$rel11
-elif [ $rel == 14 ];then
-helm_rel=$rel14
-elif [ $rel == 15 ];then
-helm_rel=$rel15
-elif [ $rel == 19 ];then
-helm_rel=$rel19
-elif [ $rel == 20 ];then
-helm_rel=$rel20
-else
-echo "-r param must currently be 11,14,15,19,20"
-exit 1
-fi
 allparams=$configuration"_"$nodes"_Rel"$rel"_"$tcp"_"$ssl"_mem:"$memres","$memlimits"_cpu:"$cpures","$cpulimits"_parall"$parallel"_partsize"$part"_"
 # Start
 TIMEFORMAT=%R
