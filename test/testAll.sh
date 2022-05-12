@@ -42,7 +42,7 @@ kubectl cp $ns/$mgtpod:/minio/profile.zip $servertmp/profile.zip
 create_test_file() {
 
 rm $testfile >/dev/null 2>&1
-testfile="$basedir/fileToUpload.txt"
+testfile="$basedir/fileToUpload1.txt"
 head -c $size"M" /dev/urandom > $testfile
 #result=$(( 3000 * $size ))
 #rm $testfile >/dev/null 2>&1
@@ -522,6 +522,7 @@ rel14=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-st
 rel15=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.15.0+9.tgz   
 rel19=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.19.0+5.tgz
 rel20=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.20.0+25.tgz
+rel23=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.23.0+22.tgz
 configuration="dist"
 tcp="def"
 ssl="tls-off"
@@ -534,6 +535,7 @@ sizes="1 10 100 200 1000 2000 5000 10000 20000"
 multiparts="5"
 drivespernode="1" 
 replicas=4
+existing_depl="no"
 #sizes="1 10 100 200 1000"
 #sizes="1 10 100 200" 
 while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k:x:g:h: flag
@@ -563,7 +565,6 @@ do
     esac
 done
 if [ $existing_depl == "yes" ]; then
-echo "exting depl selected, need a namespace"
 if [ -z $ns ];then
  echo "Existing depl selected, but no namepace selected"
  echo "Need a -e parameter set"
@@ -578,8 +579,9 @@ fi
 fi
 
 if [ -z $ns ];then
-echo "Using storobj-test as a namespace"
+echo "Using storobj-test as a 'testing' namespace"
 ns="storobj-test"
+kubectl create namespace $ns >/dev/null 2>&1
 fi
 
 if [ -z $rel -a -z $existing_depl ];then
@@ -601,6 +603,9 @@ elif [ -n $rel -a -z $existing_depl ];then
  exit 1
  fi
 fi
+rel="1.23.0+22"
+helm_rel="https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-"$rel".tgz"
+exit 0
 if [ ! -z $memlimits ];then
 #   not taking the defaults
  memsetlimit="--set server.resources.limits.memory=$memlimits"
