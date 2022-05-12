@@ -14,7 +14,7 @@ credentials:
    kubernetesSecretName: eric-eo-object-store-cred
 environment:
   STORAGE_SERVER_DNS: eric-data-object-storage-mn
-bucketname: testing
+bucketname: eocm
 global:
   registry:
     pullSecret: ""
