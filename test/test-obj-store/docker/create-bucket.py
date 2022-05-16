@@ -1,7 +1,7 @@
 from minio import Minio
 from minio.error import S3Error
 import os
-
+import distutils.util
 def main():
     os.environ["SSL_CERT_FILE"] ="/etc/pki/trust/anchors/cacertbundle.pem"
     dns_name=os.environ["STORAGE_SERVER_DNS"]
@@ -11,7 +11,7 @@ def main():
         dns_name,
         access_key=os.environ["MINIO_ACCESS_KEY"],
         secret_key=os.environ["MINIO_SECRET_KEY"],
-        secure=os.environ["TLS_ENABLED"]
+        secure=distutils.util.strtobool(os.environ["TLS_ENABLED"])
     )
 
     found = client.bucket_exists(bucketname)

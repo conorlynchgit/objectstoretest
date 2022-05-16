@@ -9,8 +9,6 @@ clusterConfig:
     mountPath: /conor/
     size: 20Gi
 credentials:
-# set to test-secret if not testing an existing deployment
-#   kubernetesSecretName: test-secret
    kubernetesSecretName: eric-eo-object-store-cred
 environment:
   STORAGE_SERVER_DNS: eric-data-object-storage-mn
@@ -37,5 +35,5 @@ resources:
     cpu: 200m
     memory: 512Mi
 tls:
-  enabled: true
+  enabled: false 
 hostNetwork: true

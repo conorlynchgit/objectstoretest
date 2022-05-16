@@ -34,10 +34,11 @@ spec:
             mountPath: /test-pvc
           - name: host-path
             mountPath: /test
+        {{- if .Values.tls.enabled }}
           - name: trust-ca-chain
             mountPath: /etc/pki/trust/anchors/
             readOnly: false
- 
+        {{ end }} 
         env:
           - name: TZ
             value: "UTC"
@@ -56,7 +57,11 @@ spec:
           - name: BUCKET_NAME
             value: {{ .Values.bucketname }}
           - name: TLS_ENABLED
-            value: "true"
+            {{- if .Values.tls.enabled }}
+            value: "True" 
+            {{- else }}
+            value: "False"
+            {{- end }}
           - name: OBJECT_STORAGE_CAPATH
             value: /etc/pki/trust/anchors
           
@@ -72,10 +77,12 @@ spec:
         - name: host-path
           hostPath:
             path: /tmp
+      {{- if .Values.tls.enabled }}
         - name: trust-ca-chain
           secret:
             secretName: eric-sec-sip-tls-trusted-root-cert
-#            items:
-#            - key: cacertbundle.pem
-#              path: root_ca.pem
+            items:
+            - key: cacertbundle.pem
+              path: root_ca.pem
+      {{ end }}
 

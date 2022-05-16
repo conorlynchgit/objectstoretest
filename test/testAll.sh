@@ -42,7 +42,7 @@ kubectl cp $ns/$mgtpod:/minio/profile.zip $servertmp/profile.zip
 create_test_file() {
 
 rm $testfile >/dev/null 2>&1
-testfile="$basedir/fileToUpload1.txt"
+testfile="$basedir/fileToUpload.txt"
 head -c $size"M" /dev/urandom > $testfile
 #result=$(( 3000 * $size ))
 #rm $testfile >/dev/null 2>&1
@@ -136,7 +136,7 @@ for i in $(kubectl get pvc -n $ns|grep 'data-object-storage'|awk '{print $1}');d
 kubectl delete pvc $i -n $ns >/dev/null 2>&1
 done
 sleep 60
-helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set server.resources.limits.memory=$memlimits --set server.resources.limits.cpu=$cpulimits --namespace=$ns --set mode=standalone --set replicas=1 --set credentials.kubernetesSecretName=test-secret --set autoEncryption.enabled=true --set global.security.tls.enabled=true --set persistentVolumeClaim.size=40Gi
+helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set server.resources.limits.memory=$memlimits --set server.resources.limits.cpu=$cpulimits --namespace=$ns --set mode=standalone --set replicas=1 $local_secret --set autoEncryption.enabled=true --set global.security.tls.enabled=true --set persistentVolumeClaim.size=40Gi
 #--set server.resources.limits.memory=$memlimits --set server.resources.limits.cpu=$cpulimits
 #helm install eric-data-object-storage-mn /home/eccd/conor/test/mn/eric-data-object-storage-mn --set server.resources.requests.memory=256Mi --set server.resources.requests.cpu=250m --namespace=$ns --set mode=standalone --set replicas=1 --set credentials.kubernetesSecretName=test-secret --set autoEncryption.enabled=true --set global.security.tls.enabled=true --set persistentVolumeClaim.size=40Gi
 sleep 60
@@ -173,7 +173,7 @@ affinity="--set nodeSelector.allpodstogether=sure"
 antiaffinity='--set affinity.podAntiAffinity=""'
 fi
 
-helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set mode=standalone --set replicas=1 $memsetres $cpusetres $memsetlimit $cpusetlimit --set credentials.kubernetesSecretName=test-secret --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=40Gi
+helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set mode=standalone --set replicas=1 $memsetres $cpusetres $memsetlimit $cpusetlimit $local_secret --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=40Gi
 #helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set mode=standalone --set replicas=1 $memsetres $cpusetres $memsetlimit $cpusetlimit --set credentials.kubernetesSecretName=test-secret --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=40Gi $affinity $antiaffinity
 sleep 60
 # initial status
@@ -205,7 +205,7 @@ fi
 
 create_mn_distributed_tlsoff() {
 affinity=""
-helm uninstall eric-data-object-storage-mn -n $ns
+helm uninstall eric-data-object-storage-mn -n $ns >/dev/null 2>&1
 sleep 30
 echo "Removing any old ObjectStore Pods and PVC's">>$result_file 
 for i in $(kubectl get pvc -n $ns|grep 'data-object-storage'|awk '{print $1}');do
@@ -219,7 +219,7 @@ kubectl label nodes $node allpodstogether=sure
 affinity="--set nodeSelector.allpodstogether=sure"
 antiaffinity='--set affinity.podAntiAffinity=""'
 fi
-helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set drivesPerNode=$drives --set credentials.kubernetesSecretName=test-secret --set replicas=$replica $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=20Gi $affinity $antiaffinity
+helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set drivesPerNode=$drives $local_secret --set replicas=$replica $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=20Gi $affinity $antiaffinity
 sleep 60
 
 echo "Helm installed ObjectStore .. waiting to come up...">>$result_file 
@@ -250,7 +250,7 @@ done
 create_testpod() {
 # Test POD
 helm uninstall test-obj-store -n $ns >/dev/null 2>&1
-sleep 120
+sleep 60 
 # remove the allpodstogether label from all nodes
 clearnodes
 if [ $1 == "same" ];then
@@ -258,20 +258,28 @@ node=$selectednode
 kubectl label nodes $node allpodstogether=sure
 fi
 # what node is mn-0 on?
+
+if [ $existing_depl == "no" ]; then
+#local_secret="--set credentials.kubernetesSecretName=test-secret"
+local_secret="--set credentials.kubernetesSecretName=eric-eo-object-store-cred"
+else
+local_secret=""
+fi
 if [ $1 == "same" ];then
 echo "##################################################################" >> $result_file
 echo "########    Creating test with PODS on same NODE    ##################" >> $result_file
 echo "#####################################################################" >> $result_file
 cp $basedir/test-obj-store/deployment-same.yaml $basedir/test-obj-store/templates/deployment.yaml
-helm install test-obj-store $basedir/test-obj-store/ -n $ns
 else
 echo " "
 echo "#######################################################################" >> $result_file
 echo "########    Creating test with PODS on different NODE    ################" >> $result_file
 echo "#######################################################################" >> $result_file
 cp $basedir/test-obj-store/deployment-notsame.yaml $basedir/test-obj-store/templates/deployment.yaml
-helm install test-obj-store $basedir/test-obj-store/ -n $ns
 fi
+echo "local secret is $local_secret"
+helm install --debug test-obj-store $basedir/test-obj-store/ -n $ns $local_secret
+
 sleep 60
 testpod=$(kubectl get po -n $ns|grep test-obj-store|awk '{print $1}')
 echo "test pod is $testpod"
@@ -457,6 +465,7 @@ fi
 }
 
 setup_tcp() {
+# return 1 for now
 return 1
 if [ "$1" == "def" ]; then
 currtcp="defTCP"
@@ -478,7 +487,7 @@ test_all_distributed() {
 # cleanup later
 
 #tls-off
-if [ -z $existing_depl ];then
+if [ $existing_depl == "no" ]; then
   create_testpod $nodes
   for replica in $replicas;do
   for drives in $drivespernode;do
@@ -486,7 +495,7 @@ if [ -z $existing_depl ];then
       for parallel in $parallellist;do
         for part in $multiparts;do
           for size in $sizes;do
-            run_tests $size "ver_"$rel"_Dist_"$size"mb_""Replicas_"$replica"_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_tcpSetting""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part""$1 $1
+            run_tests $size "ver_"$rel"_Dist_"$size"mb_""Replicas_"$replica"_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part""$1 $1
           done
         done
       done
@@ -516,15 +525,10 @@ fi
 }
 #basedir=`dirname "$0"`
 basedir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-resultsdir=$basedir/
-rel11=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.11.0+19.tgz
-rel14=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.14.0+41.tgz   
-rel15=https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.15.0+9.tgz   
-rel19=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.19.0+5.tgz
-rel20=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.20.0+25.tgz
-rel23=https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-1.23.0+22.tgz
+resultsdir=$basedir
 configuration="dist"
 tcp="def"
+currtcp="defTCP"
 ssl="tls-off"
 nodes="notsame"
 parallellist="3"
@@ -536,6 +540,7 @@ multiparts="5"
 drivespernode="1" 
 replicas=4
 existing_depl="no"
+latest_object_store_rel="1.23.0+22"
 #sizes="1 10 100 200 1000"
 #sizes="1 10 100 200" 
 while getopts t:c:s:n:m:p:b:a:l:d:f:e:r:t:u:v:k:x:g:h: flag
@@ -581,31 +586,14 @@ fi
 if [ -z $ns ];then
 echo "Using storobj-test as a 'testing' namespace"
 ns="storobj-test"
+kubectl delete namespace $ns >/dev/null 2>&1
 kubectl create namespace $ns >/dev/null 2>&1
 fi
 
-if [ -z $rel -a -z $existing_depl ];then
-echo "Missing -r <Object Store main release>"
-exit 1
-elif [ -n $rel -a -z $existing_depl ];then
- if [ $rel == 11 ];then
- helm_rel=$rel11
- elif [ $rel == 14 ];then
- helm_rel=$rel14
- elif [ $rel == 15 ];then
- helm_rel=$rel15
- elif [ $rel == 19 ];then
- helm_rel=$rel19
- elif [ $rel == 20 ];then
- helm_rel=$rel20
- else
- echo "-r param must currently be 11,14,15,19,20"
- exit 1
- fi
+if [ -z $rel ];then
+rel=$latest_object_store_rel
 fi
-rel="1.23.0+22"
 helm_rel="https://arm.sero.gic.ericsson.se/artifactory/proj-adp-eric-data-object-storage-mn-released-helm/eric-data-object-storage-mn/eric-data-object-storage-mn-"$rel".tgz"
-exit 0
 if [ ! -z $memlimits ];then
 #   not taking the defaults
  memsetlimit="--set server.resources.limits.memory=$memlimits"
@@ -634,7 +622,7 @@ else
  cpures="def_cpu_res"
 fi
 
-allparams=$configuration"_"$nodes"_Rel"$rel"_"$tcp"_"$ssl"_mem:"$memres","$memlimits"_cpu:"$cpures","$cpulimits"_parall"$parallel"_partsize"$part"_"
+allparams=$configuration"_"$nodes"_Rel_"$rel"_tcp_"$tcp"_"$ssl"_mem:"$memres","$memlimits"_cpu:"$cpures","$cpulimits"_parall"$parallellist"_partsize"$part"_"
 # Start
 TIMEFORMAT=%R
 testtime=$(date +"%m_%d_%Y_%H_%M")
