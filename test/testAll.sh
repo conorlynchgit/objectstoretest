@@ -200,7 +200,69 @@ else
 create_mn_distributed_tlson $2
 fi
 }
+create_mn_distributed_tlson() {
+# setup SIPTLS etc
+kubectl create secret generic eric-data-distributed-coordinator-creds --namespace $ns --from-literal=etcdpasswd=$(echo -n "Cody1357" | base64)
+helm upgrade --install eric-sec-sip-tls-crd \
+        https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-released-helm/eric-sec-sip-tls-crd/eric-sec-sip-tls-crd-2.5.0+27.tgz \
+        --namespace $ns \
+        --atomic
+kubectl get crd -o custom-columns=name:metadata.name \
+     | grep -E "com.ericsson.sec.tls|siptls.sec.ericsson.com"
 
+helm install eric-data-distributed-coordinator-ed https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm/eric-data-distributed-coordinator-ed/eric-data-distributed-coordinator-ed-3.0.0-9.tgz  --namespace=$ns
+helm install eric-sec-sip-tls https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm/eric-sec-sip-tls/eric-sec-sip-tls-3.1.0-36.tgz  --namespace=$ns
+helm install eric-sec-key-management https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm/eric-sec-key-management/eric-sec-key-management-3.0.0-8.tgz --set persistence.type=etcd --namespace=$ns
+
+# wait until all pods starting
+
+statusAll="NotRunning"
+while [ $statusAll != "Running" ];do
+listt=`kubectl get po -n $ns|egrep -v 'test|STATUS'|awk '{print $3}'`
+sleep 30
+statusAll="Running"
+ for status in `echo $listt`;do
+  if [ $status != "Running" ];then
+   statusAll="NotRunning"
+  fi
+ done
+done
+
+affinity=""
+helm uninstall eric-data-object-storage-mn -n $ns >/dev/null 2>&1
+sleep 30
+echo "Removing any old ObjectStore Pods and PVC's">>$result_file
+for i in $(kubectl get pvc -n $ns|grep 'data-object-storage'|awk '{print $1}');do
+kubectl delete pvc $i -n $ns >/dev/null 2>&1
+done
+sleep 60
+clearnodes
+if [ $1 == "same" ];then
+node=$selectednode
+kubectl label nodes $node allpodstogether=sure
+affinity="--set nodeSelector.allpodstogether=sure"
+antiaffinity='--set affinity.podAntiAffinity=""'
+fi
+helm install --debug eric-data-object-storage-mn $helm_rel --namespace=$ns --set drivesPerNode=$drives $local_secret --set replicas=$replica $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=true --set global.security.tls.enabled=true --set persistentVolumeClaim.size=20Gi $affinity $antiaffinity
+sleep 60
+
+echo "Helm installed ObjectStore .. waiting to come up...">>$result_file
+statusAll="NotRunning"
+while [ $statusAll != "Running" ];do
+sleep 30
+statusAll="Running"
+for ((i=0;i<=replicas-1;i++)); do
+status=$(kubectl get -o template pod/eric-data-object-storage-mn-$i --template={{.status.phase}} -n $ns)
+if [ $status != "Running" ];then
+statusAll="NotRunning"
+fi
+done
+done
+echo "All MN servers are  running..."
+echo "############################################################" >> $result_file
+echo "#########     Distributed:TLS-ON                 ###########" >> $result_file
+echo "############################################################" >> $result_file
+}
 
 
 create_mn_distributed_tlsoff() {
@@ -258,13 +320,12 @@ node=$selectednode
 kubectl label nodes $node allpodstogether=sure
 fi
 # what node is mn-0 on?
-
-if [ $existing_depl == "no" ]; then
-#local_secret="--set credentials.kubernetesSecretName=test-secret"
-local_secret="--set credentials.kubernetesSecretName=eric-eo-object-store-cred"
+if [ $2 == "tls-on" ];then
+local_secret="--set tls.enabled=true --set credentials.kubernetesSecretName=eric-eo-object-store-cred"
 else
-local_secret=""
+local_secret="--set tls.enabled=false"
 fi
+
 if [ $1 == "same" ];then
 echo "##################################################################" >> $result_file
 echo "########    Creating test with PODS on same NODE    ##################" >> $result_file
@@ -451,13 +512,13 @@ ssh $lastnode sudo sysctl net.core.rmem_max net.core.wmem_max net.core.rmem_defa
 test_all_standalone() {
 if [ "$1" == "tls-on"  ]; then
  create_mn_standalone
- create_testpod $nodes
+ create_testpod $nodes $ssl
  run_tests $size "ver_"$rel"_Standalone_"$size"mb_"$nodes"_Nodes_"$currtcp"_tlsON""_mem:"$memres","$memlimits"_cpu:"$cpures","$cpulimits"_par"$parallel"_partsize"$part "tls-on"
 else
 # command line specifies same or notsame only
 create_mn_standalone_tlsoff $nodes
 #run_dd_script
-create_testpod $nodes
+create_testpod $nodes $ssl
  for size in $sizes;do 
   run_tests $size "ver_"$rel"_Standalone_"$size"mb_"$nodes"_Nodes_"$currtcp"_tlsOFF""_mem:"$memres","$memlimits"_cpu:"$cpures","$cpulimits"_par"$parallel"_partsize"$part "tls-off"
  done
@@ -485,13 +546,18 @@ fi
 }
 test_all_distributed() {
 # cleanup later
+if [ $2 == "tls-on" ];then
+local_secret="--set tls.enabled=true --set credentials.kubernetesSecretName=eric-eo-object-store-cred"
+else
+local_secret="--set tls.enabled=false --set credentials.kubernetesSecretName=eric-eo-object-store-cred"
+fi
 
 #tls-off
 if [ $existing_depl == "no" ]; then
-  create_testpod $nodes
   for replica in $replicas;do
   for drives in $drivespernode;do
     create_mn_distributed $1 $nodes
+    create_testpod $nodes $ssl
       for parallel in $parallellist;do
         for part in $multiparts;do
           for size in $sizes;do
@@ -502,7 +568,7 @@ if [ $existing_depl == "no" ]; then
   done
   done
 else
-  create_testpod $nodes
+  create_testpod $nodes $ssl
   for replica in $replicas;do
   for drives in $drivespernode;do
       for parallel in $parallellist;do
@@ -588,6 +654,8 @@ echo "Using storobj-test as a 'testing' namespace"
 ns="storobj-test"
 kubectl delete namespace $ns >/dev/null 2>&1
 kubectl create namespace $ns >/dev/null 2>&1
+# create secrets for Objectstore accesskey,secretkey
+kubectl apply -f $basedir/test-obj-store/eric-eo-object-store-cred.yaml -n $ns
 fi
 
 if [ -z $rel ];then
