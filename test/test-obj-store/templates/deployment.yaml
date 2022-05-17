@@ -27,7 +27,7 @@ spec:
           - /bin/sleep
           - infinity
       - name: eosc
-        image: armdocker.rnd.ericsson.se/proj-eo-cm/bandits/objectpoc:27
+        image: armdocker.rnd.ericsson.se/proj-eo-cm/bandits/objectpoc:43
         imagePullPolicy: IfNotPresent
         volumeMounts:
           - name: pvcvol

@@ -343,12 +343,12 @@ echo "SDK python test $i" >> $result_file
 # get the tracefiles created on mgt pod
  mgt_trace_setup
  fi
-kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/create-bucker.py" >/dev/null 2>&1
-kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/file-remove.py" >/dev/null 2>&1
+kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python /testSDK/create-bucker.py" >/dev/null 2>&1
+kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python /testSDK/file-remove.py" >/dev/null 2>&1
 sleep 5
 echo "#### Start Test $i now   #####:" >> $result_file
 start=`date +%s.%N`
-kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/$sdkpython" >/dev/null 2>&1
+kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python /testSDK/$sdkpython" >/dev/null 2>&1
 end=`date +%s.%N`
 runtime=$( echo "$end - $start" | bc -l )
 current_throughput=$(echo "scale=2;$size/$runtime"|bc -l)
