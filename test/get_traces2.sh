@@ -12,13 +12,12 @@ ifindex=`kubectl -it exec po/$pod -c $cont -n $ns -- cat -T /sys/class/net/eth0/
 ifindex2=`echo $ifindex|sed 's/\\r$//'`
 ifindex=$ifindex2
 #ifindex=$(ssh $workerip "sudo docker exec $container /bin/bash -c 'cat /sys/class/net/eth0/iflink'")
-a=$(ssh $workerip "grep $ifindex /sys/class/net/*/ifindex")
+a=$(ssh -oStrictHostKeyChecking=no $workerip "grep -w $ifindex /sys/class/net/*/ifindex")
 interface=$(echo $a|awk -F '/sys/class/net/' '{print $2}'|awk -F '/ifindex' '{print $1}')
-echo "BEFORE STARTING tcpdump $workerip"
-ssh $workerip "sudo tcpdump --buffer-size=6144 -i $interface -s 0 -G $tracetime -W 1 -w ~/$pod.pcap" & 
-echo "AFTER STARTING tcpdump"
-sleep $tracetime
+echo "STARTING tcpdump $workerip"
+ssh -oStrictHostKeyChecking=no $workerip "sudo tcpdump --buffer-size=6144 -i $interface -s 0 -G $tracetime -W 1 -w ~/$pod.pcap" & 
+#sleep $tracetime
 #workerip=$(kubectl get pod/$pod -n storobj-test -o json|grep '\"hostIP'|awk -F ':' '{print $2}'|awk -F ',' '{print $1}'|awk -F '"' '{print $2}')
-scp $workerip:~/$pod.pcap .
+#scp $workerip:~/$pod.pcap .
 
 

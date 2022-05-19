@@ -16,28 +16,43 @@ echo "-r 'Object store main release (11 / 14)"
 echo "-x 'yes' (if there is an existing deployment for testing)"
 }
 mgt_trace_setup() {
-kubectl exec pod/$mgtpod -n $ns  -- bash -c "mc config --insecure host add myminio http://eric-data-object-storage-mn:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY"
-kubectl exec pod/$mgtpod -n $ns  -- bash -c "rm -rf /tmp/my-serverconfig"
-kubectl exec pod/$mgtpod -n $ns  -- bash -c "rm -rf /tmp/lock_info"
-kubectl exec pod/$mgtpod -n $ns  -- bash -c "rm -rf /tmp/tracefile"
-kubectl exec pod/$mgtpod -n $ns  -- bash -c "mc admin config export myminio > /tmp/my-serverconfig"
-kubectl exec pod/$mgtpod -n $ns  -- bash -c "mc admin top locks myminio >/tmp/lock_info"
-kubectl exec pod/$mgtpod -n $ns  -- bash -c "cd ~; mc admin profile start myminio/"
-kubectl exec pod/$mgtpod -n $ns  -- bash -c "mc admin --insecure --debug trace -v -all myminio >/tmp/tracefile" &
-kubectl exec pod/$mgtpod -n $ns  -- bash -c "cd ~;mc admin profile stop myminio/"
+accesskey=$(kubectl exec pod/$mgtpod -c manager -n $ns -- printenv MINIO_ACCESS_KEY)
+secretkey=$(kubectl exec pod/$mgtpod -c manager -n $ns -- printenv MINIO_SECRET_KEY)
+tls=$(kubectl exec pod/$mgtpod -c manager -n $ns -- printenv TLS_ENABLED)
+if [ $tls == false ]; then
+scheme="http"
+else
+scheme="https"
+fi
+kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "mc config --insecure host add myminio $scheme://eric-data-object-storage-mn:9000 $accesskey $secretkey"
+kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "rm -rf /tmp/my-serverconfig"
+kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "rm -rf /tmp/lock_info"
+kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "rm -rf /tmp/tracefile"
+kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "mc admin config export myminio > /tmp/my-serverconfig"
+kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "mc admin top locks myminio >/tmp/lock_info"
+kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "cd ~; mc admin profile start myminio/"
+kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "mc admin --insecure trace --debug myminio >/tmp/tracefile" &
+# sleep for 30 seconds?
+#kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "cd ~;mc admin profile stop myminio/"
 }
 
 mgt_trace_copy_cleanup() {
-pid=$(kubectl exec pod/$mgtpod -n $ns -- bash -c "ps -ef|grep tracefile|egrep -v 'grep'"|awk '{print $2}')
-kubectl exec pod/$mgtpod -n $ns -- bash -c "kill -9 $pid"
-pid=$(kubectl exec pod/$mgtpod -n $ns -- bash -c "ps -ef|grep 'mc admin --insecure --debug trace -v -all myminio'|egrep -v 'grep'"|awk '{print $2}')
-kubectl exec pod/$mgtpod -n $ns -- bash -c "kill -9 $pid"
+kubectl exec pod/$mgtpod -c manager -n $ns  -- bash -c "cd ~;mc admin profile stop myminio/"
+pids=$(kubectl exec pod/$mgtpod -c manager -n $ns -- bash -c "ps -ef|grep tracefile|egrep -v 'grep'"|awk '{print $2}')
 
+for pid in `echo $pids`;do
+kubectl exec pod/$mgtpod -c manager -n $ns -- bash -c "kill -9 $pid"
+done
 
-kubectl cp $ns/$mgtpod:/tmp/my-serverconfig $servertmp/my-serverconfig
-kubectl cp $ns/$mgtpod:/tmp/lock_info $servertmp/lock_info
-kubectl cp $ns/$mgtpod:/tmp/tracefile $servertmp/tracefile
-kubectl cp $ns/$mgtpod:/minio/profile.zip $servertmp/profile.zip
+pids=$(kubectl exec pod/$mgtpod -c manager -n $ns -- bash -c "ps -ef|grep 'mc admin --insecure --debug trace -v -all myminio'|egrep -v 'grep'"|awk '{print $2}')
+for pid in `echo $pids`;do
+kubectl exec pod/$mgtpod -c manager -n $ns -- bash -c "kill -9 $pid"
+done
+
+kubectl cp $ns/$mgtpod:/tmp/my-serverconfig -c manager $servertmp/my-serverconfig
+kubectl cp $ns/$mgtpod:/tmp/lock_info -c manager $servertmp/lock_info
+kubectl cp $ns/$mgtpod:/tmp/tracefile -c manager $servertmp/tracefile
+kubectl cp $ns/$mgtpod:/minio/profile.zip -c manager $servertmp/profile.zip
 }
 create_test_file() {
 
@@ -390,19 +405,20 @@ echo "#### Start SDKpython Test session  #####:" >> $result_file
 for i in {1..1}; do
 sleep 5 
 echo "SDK python test $i" >> $result_file
-###############if [ $ssl == "tls-off" ];then
  if [ $debug == "yes" ];then
-
- kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "tcpdump --buffer-size=6144 -s 0 -w /$tcpfile &"
-
-# setup tests on the servers and mgt pod
- for ((i=0;i<=$replicas-1;i++)); do
- $basedir/get_traces2.sh eric-data-object-storage-mn-$i
- done
- mgtpod=$(kubectl get po -n $ns|grep eric-data-object-storage-mn-mgt|awk '{print $1}')
- $basedir/get_traces2.sh $mgtpod
-# get the tracefiles created on mgt pod
- mgt_trace_setup
+   tracetime=30
+# setup test POD tcpdump trace
+   $basedir/get_traces2.sh $testpod "eosc" $ns
+   kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "tcpdump --buffer-size=6144 -s 0 -G $tracetime -W 1 -w /tmp/$testpod.pcap" &
+# setup tests on the servers
+   for ((i=0;i<=$replicas-1;i++)); do
+   $basedir/get_traces2.sh eric-data-object-storage-mn-$i "eric-data-object-storage-mn" $ns
+   done
+# setup mgt server tracings may be good for bur
+   mgtpod=$(kubectl get po -n $ns|grep eric-data-object-storage-mn-mgt|awk '{print $1}')
+   $basedir/get_traces2.sh $mgtpod "manager" $ns
+# setup traces using mc
+   mgt_trace_setup
  fi
 kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python /testSDK/create-bucker.py" >/dev/null 2>&1
 kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python /testSDK/file-remove.py" >/dev/null 2>&1
@@ -420,14 +436,22 @@ echo "Throughput for file size $size is $current_time"
 # convert to MB/s
 #command=$(kubectl exec pod/$testpod -n $ns -c eosc -- bash -c "python3 /testSDK/$sdkpython")
  if [ $debug == "yes" ];then
-  pid=$(kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "ps -ef|grep 'tcpdump --buffer-size'|egrep -v 'sh|grep'"|awk '{print $1}')
-  kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "kill -9 $pid"
-
-# wait for 30 secs to ensure that the server and mgt tcpdumps are complete
-  sleep 30
-# get tcpdump for mn and mgt pods
+# collect tracings
   \rm -rf $servertmp >/dev/null 2>&1
   mkdir $servertmp
+# wait for 30 more secs to ensure that the server and mgt tcpdumps are complete
+  sleep 30
+  workerip=$(kubectl get pod/$testpod -n $ns -o json|grep '\"hostIP'|awk -F ':' '{print $2}'|awk -F ',' '{print $1}'|awk -F '"' '{print $2}')
+  scp $workerip:~/$testpod.pcap $servertmp
+  ssh $workerip "rm ~/$testpod.pcap"
+#  kubectl cp $ns/$testpod:/tmp/$testpod.pcap -c eosc $servertmp/$testpod.pcap
+#kubectl rm $ns/$testpod:/tmp/$testpod.pcap -c eosc $servertmp/$testpod.pcap
+# testpod
+#  pid=$(kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "ps -ef|grep 'tcpdump --buffer-size'|egrep -v 'sh|grep'"|awk '{print $1}')
+#  kubectl exec pod/$testpod -n $ns -c tcpdump -- sh -c "kill -9 $pid"
+  #workerip=$(kubectl get pod/$testpod -n $ns -o json|grep '\"hostIP'|awk -F ':' '{print $2}'|awk -F ',' '{print $1}'|awk -F '"' '{print $2}')
+  #scp $workerip:~/$testpod.pcap $servertmp
+  #ssh $workerip "rm ~/$testpod.pcap"
   for ((i=0;i<=$replicas-1;i++)); do
   workerip=$(kubectl get pod/eric-data-object-storage-mn-$i -n $ns -o json|grep '\"hostIP'|awk -F ':' '{print $2}'|awk -F ',' '{print $1}'|awk -F '"' '{print $2}')
   scp $workerip:~/eric-data-object-storage-mn-$i.pcap $servertmp
@@ -546,7 +570,7 @@ fi
 }
 test_all_distributed() {
 # cleanup later
-if [ $2 == "tls-on" ];then
+if [ $1 == "tls-on" ];then
 local_secret="--set tls.enabled=true --set credentials.kubernetesSecretName=eric-eo-object-store-cred"
 else
 local_secret="--set tls.enabled=false --set credentials.kubernetesSecretName=eric-eo-object-store-cred"
@@ -636,18 +660,22 @@ do
     esac
 done
 if [ $existing_depl == "yes" ]; then
-if [ -z $ns ];then
- echo "Existing depl selected, but no namepace selected"
- echo "Need a -e parameter set"
- exit 1
-else
-echo "You have selected to test on an exising deployment on namespace $ns"
-echo "Please ensure that the ./test-obj-store/values.yaml file is correctly set towards this namespace"
-echo "Continue <enter> "
-read a
+ if [ -z $ns ];then
+  echo "Existing depl selected, but no namepace selected"
+  echo "Need a -e parameter set"
+  exit 1
+ fi
+# check the tls setting matches whats already running
+mgtpod=$(kubectl get po -n $ns|grep eric-data-object-storage-mn-mgt|awk '{print $1}')
+existingtls=$(kubectl exec pod/$mgtpod -c manager -n $ns -- printenv TLS_ENABLED)
+# for existing ns overwrite tls setting (if needed)
+  if [ $existingtls == "true" ];then
+   ssl="tls-on"
+  else
+   ssl="tls-off"
+  fi
 fi
 
-fi
 
 if [ -z $ns ];then
 echo "Using storobj-test as a 'testing' namespace"
