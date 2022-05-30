@@ -73,33 +73,40 @@ head -c $size"M" /dev/urandom > $testfile
 update_min_max() {
 # check the current MB/s value, and compare with the MIN and MAX values obtained for this test case
 # If a new MIN or MAX, then overwrite the previous (tcpdump) file
-ls $mindir/*$tcpfile >/dev/null 2>&1
+#echo "ABOUT TO START MIN MAX"
+#read a
+
+ls $mindir/*$tcpfile* >/dev/null 2>&1
 fileexists=$?
 if [ $fileexists == 0 ];then
- echo "file exists"
+ echo "min file exists"
 # compare the current mbs with mbs from MIN dir
  cd $mindir
- mbsmin=$(ls *$tcpfile|awk -F 'mbs' '{print $1}')
- if (( $(echo "$current_time < $mbsmin"|bc -l) )); then
-  rm *$tcpfile
+ mbsmin=$(ls |grep $tcpfile|awk -F 'mbs' '{print $1}')
+
+  if (( $(echo "$current_time < $mbsmin"|bc -l) )); then
+  \rm -rf $mindir/*$tcpfile*
   \rm -rf $mindir/*$tcpfile"Server_traces" >/dev/null 2>&1 
-   if [ $debug == "yes" ];then
-    kubectl cp $ns/$testpod:/$tcpfile $mindir/$current_time"mbs__"$tcpfile -c tcpdump
-    mkdir $mindir/$current_time"mbs__"$tcpfile"Server_traces" >/dev/null 2>&1 
+    if [ $debug == "yes" ];then
+    #kubectl cp $ns/$testpod:/$tcpfile $mindir/$current_time"mbs__"$tcpfile -c tcpdump
+    #mkdir $mindir/$current_time"mbs__"$tcpfile"Server_traces" >/dev/null 2>&1 
+    mkdir $mindir/$current_time"mbs__"$tcpfile"Server_traces" 
+    echo "NEW DIR created"
+    ls $mindir/ 
  # copy server tcpdumps
     cp $servertmp/* $mindir/$current_time"mbs__"$tcpfile"Server_traces" 
-   else
+    else
     touch $mindir/$current_time"mbs__"$tcpfile
-   fi
+    fi
 
-   echo "**** NEW MIN of $current_time mbs for test $tcpfile">>$result_file
-  fi
+    echo "**** NEW MIN of $current_time mbs for test $tcpfile">>$result_file
+   fi
 else
-echo "file NOT exists"
+echo "min file NOT exists"
 # so just copy this current to be the min value now
 
  if [ $debug == "yes" ]; then
-  kubectl cp $ns/$testpod:/$tcpfile $mindir/$current_time"mbs__"$tcpfile -c tcpdump
+ # kubectl cp $ns/$testpod:/$tcpfile $mindir/$current_time"mbs__"$tcpfile -c tcpdump
   mkdir $mindir/$current_time"mbs__"$tcpfile"Server_traces" >/dev/null 2>&1
 # copy server tcpdumps
   cp $servertmp/* $mindir/$current_time"mbs__"$tcpfile"Server_traces"
@@ -109,19 +116,19 @@ echo "file NOT exists"
 # record this timing
 fi
 # check against MAX values
-ls $maxdir/*$tcpfile >/dev/null 2>&1
+ls $maxdir/*$tcpfile* >/dev/null 2>&1
 fileexists=$?
 if [ $fileexists == 0 ];then
- echo "file exists"
+ echo "max file exists"
 # compare the current mbs with mbs from MAx dir
  cd $maxdir
- mbsmax=$(ls *$tcpfile|awk -F 'mbs' '{print $1}')
+ mbsmax=$(ls |grep $tcpfile|awk -F 'mbs' '{print $1}')
  if (( $(echo "$current_time > $mbsmax"|bc -l) )); then
-  rm *$tcpfile
+  \rm -rf $maxdir/*$tcpfile*
   \rm -rf $maxdir/*$tcpfile"Server_traces" >/dev/null 2>&1 
 
   if [ $debug == "yes" ];then
-   kubectl cp $ns/$testpod:/$tcpfile $maxdir/$current_time"mbs__"$tcpfile -c tcpdump
+   #kubectl cp $ns/$testpod:/$tcpfile $maxdir/$current_time"mbs__"$tcpfile -c tcpdump
    mkdir $maxdir/$current_time"mbs__"$tcpfile"Server_traces" >/dev/null 2>&1 
    cp $servertmp/* $maxdir/$current_time"mbs__"$tcpfile"Server_traces" 
   else
@@ -131,10 +138,10 @@ if [ $fileexists == 0 ];then
  echo "**** NEW MAX of $current_time mbs for test $tcpfile">>$result_file
  fi
 else
-echo "file NOT exists"
+echo "max file NOT exists"
 # so copy this current to be the max value now
  if [ $debug == "yes" ]; then
-  kubectl cp $ns/$testpod:/$tcpfile $maxdir/$current_time"mbs__"$tcpfile -c tcpdump
+ # kubectl cp $ns/$testpod:/$tcpfile $maxdir/$current_time"mbs__"$tcpfile -c tcpdump
   mkdir $maxdir/$current_time"mbs__"$tcpfile"Server_traces" >/dev/null 2>&1
 # copy server tcpdumps
   cp $servertmp/* $maxdir/$current_time"mbs__"$tcpfile"Server_traces"
@@ -142,6 +149,8 @@ echo "file NOT exists"
   touch $maxdir/$current_time"mbs__"$tcpfile
  fi
 fi
+#echo "ABOUT TI FINISH"
+#read a
 }
 create_mn_standalone() {
 replicas=1
@@ -258,7 +267,7 @@ kubectl label nodes $node allpodstogether=sure
 affinity="--set nodeSelector.allpodstogether=sure"
 antiaffinity='--set affinity.podAntiAffinity=""'
 fi
-helm install --debug eric-data-object-storage-mn $helm_rel --namespace=$ns --set drivesPerNode=$drives $local_secret --set replicas=$replica $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=true --set global.security.tls.enabled=true --set persistentVolumeClaim.size=20Gi $affinity $antiaffinity
+helm install --debug eric-data-object-storage-mn $helm_rel --namespace=$ns --set drivesPerNode=$drives $local_secret --set replicas=$replica $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=true --set global.security.tls.enabled=true --set persistentVolumeClaim.size=60Gi $affinity $antiaffinity
 sleep 60
 
 echo "Helm installed ObjectStore .. waiting to come up...">>$result_file
@@ -296,7 +305,7 @@ kubectl label nodes $node allpodstogether=sure
 affinity="--set nodeSelector.allpodstogether=sure"
 antiaffinity='--set affinity.podAntiAffinity=""'
 fi
-helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set drivesPerNode=$drives $local_secret --set replicas=$replica $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=20Gi $affinity $antiaffinity
+helm install eric-data-object-storage-mn $helm_rel --namespace=$ns --set drivesPerNode=$drives $local_secret --set replicas=$replica $memsetres $cpusetres $memsetlimit $cpusetlimit --set autoEncryption.enabled=false --set global.security.tls.enabled=false --set persistentVolumeClaim.size=60Gi $affinity $antiaffinity
 sleep 60
 
 echo "Helm installed ObjectStore .. waiting to come up...">>$result_file 
@@ -402,8 +411,10 @@ echo "in pod" >>$result_file
 # SDK testing
 tcpfile="SDK_python"$basictcpfile
 echo "#### Start SDKpython Test session  #####:" >> $result_file
-for i in {1..1}; do
+for i in {1..3}; do
 sleep 5 
+echo "GET YOU TRACES IN ORDER AND PRESS ENTER"
+read a
 echo "SDK python test $i" >> $result_file
  if [ $debug == "yes" ];then
    tracetime=30
@@ -578,6 +589,7 @@ fi
 
 #tls-off
 if [ $existing_depl == "no" ]; then
+  for nodes in $nodeslist;do
   for replica in $replicas;do
   for drives in $drivespernode;do
     create_mn_distributed $1 $nodes
@@ -591,19 +603,16 @@ if [ $existing_depl == "no" ]; then
       done
   done
   done
+  done
 else
   create_testpod $nodes $ssl
-  for replica in $replicas;do
-  for drives in $drivespernode;do
       for parallel in $parallellist;do
         for part in $multiparts;do
           for size in $sizes;do
-            run_tests $size "ver_"$rel"_Dist_"$size"mb_""Replicas_"$replica"_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_tcpSetting""_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part""$1 $1
+            run_tests $size "ver_"$rel"_Dist_"$size"mb_""Replicas_"$replica"_drives_"$drives"_"$nodes"_Nodes_"$currtcp"_mem:"$memres","$memlimits"_cpu:_"$cpures","$cpulimits"_par"$parallel"_partsize"$part""$1 $1
           done
         done
       done
-  done
-  done
 fi
 
 
@@ -620,7 +629,7 @@ configuration="dist"
 tcp="def"
 currtcp="defTCP"
 ssl="tls-off"
-nodes="notsame"
+nodeslist="notsame"
 parallellist="3"
 part="0"
 debug="no"
@@ -639,7 +648,7 @@ do
         c) configuration="${OPTARG}";;
         t) tcp="${OPTARG}";;
         s) ssl="${OPTARG}";;
-        n) nodes="${OPTARG}";;
+        n) nodeslist="${OPTARG}";;
         m) memlimits="${OPTARG}";; 
         p) cpulimits="${OPTARG}";; 
         u) memres="${OPTARG}";; 
@@ -663,6 +672,12 @@ if [ $existing_depl == "yes" ]; then
  if [ -z $ns ];then
   echo "Existing depl selected, but no namepace selected"
   echo "Need a -e parameter set"
+  exit 1
+ fi
+ kubectl get namespace $ns >/dev/null 2>&1
+ nsok=$?
+ if [ $nsok != 0 ];then
+  echo "Namespace specified does not exist"
   exit 1
  fi
 # check the tls setting matches whats already running
@@ -718,7 +733,7 @@ else
  cpures="def_cpu_res"
 fi
 
-allparams=$configuration"_"$nodes"_Rel_"$rel"_tcp_"$tcp"_"$ssl"_mem:"$memres","$memlimits"_cpu:"$cpures","$cpulimits"_parall"$parallellist"_partsize"$part"_"
+allparams=$configuration"_""_Rel_"$rel"_tcp_"$tcp"_"$ssl"_mem:"$memres","$memlimits"_cpu:"$cpures","$cpulimits"_parall"$parallellist"_partsize"$part"_"
 # Start
 TIMEFORMAT=%R
 testtime=$(date +"%m_%d_%Y_%H_%M")
