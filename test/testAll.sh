@@ -412,9 +412,9 @@ echo "in pod" >>$result_file
 tcpfile="SDK_python"$basictcpfile
 echo "#### Start SDKpython Test session  #####:" >> $result_file
 for i in {1..3}; do
-sleep 5 
-echo "GET YOU TRACES IN ORDER AND PRESS ENTER"
+echo "press any key.."
 read a
+sleep 5 
 echo "SDK python test $i" >> $result_file
  if [ $debug == "yes" ];then
    tracetime=30
@@ -630,6 +630,7 @@ tcp="def"
 currtcp="defTCP"
 ssl="tls-off"
 nodeslist="notsame"
+nodes="notsame"
 parallellist="3"
 part="0"
 debug="no"

@@ -14,7 +14,7 @@ ifindex=$ifindex2
 #ifindex=$(ssh $workerip "sudo docker exec $container /bin/bash -c 'cat /sys/class/net/eth0/iflink'")
 a=$(ssh -oStrictHostKeyChecking=no $workerip "grep -w $ifindex /sys/class/net/*/ifindex")
 interface=$(echo $a|awk -F '/sys/class/net/' '{print $2}'|awk -F '/ifindex' '{print $1}')
-echo "STARTING tcpdump $workerip"
+echo "STARTING tcpdump for 30 seconds It will be created $workerip at /$pod.pcap"
 ssh -oStrictHostKeyChecking=no $workerip "sudo tcpdump --buffer-size=6144 -i $interface -s 0 -G $tracetime -W 1 -w ~/$pod.pcap" & 
 #sleep $tracetime
 #workerip=$(kubectl get pod/$pod -n storobj-test -o json|grep '\"hostIP'|awk -F ':' '{print $2}'|awk -F ',' '{print $1}'|awk -F '"' '{print $2}')
