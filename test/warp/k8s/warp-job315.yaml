@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: warp-job315
+spec:
+  template:
+    spec:
+      containers:
+      - name: warp-job315
+        env:
+          - name: WARP_ACCESS_KEY
+            value: "o3XhjWSC9b4I1wUt"
+          - name: WARP_SECRET_KEY
+            value: "PvSpz8BnAOQzmBdh"
+        image: "minio/warp:latest"
+        imagePullPolicy: Always
+        args: [ "put", "--bucket", "benchmark-bucket", "--warp-client", "warp-{0...0}.warp.storobj-test.svc.cluster.local:7761", "--host", "eric-data-object-storage-mn.eric-eo-cm-prod315.svc.cluster.local:9000", "--concurrent", "1", "--obj.size", "5GiB", "--duration", "10m" ]
+      restartPolicy: Never
+  backoffLimit: 4
