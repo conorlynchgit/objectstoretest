@@ -1,0 +1,21 @@
+apiVersion: v1
+data:
+  accesskey: bzNYaGpXU0M5YjRJMXdVdA==
+  secretkey: UHZTcHo4Qm5BT1F6bUJkaA==
+kind: Secret
+metadata:
+  annotations:
+    ericsson.com/product-name: EO
+    ericsson.com/product-number: AOT1015396
+    ericsson.com/product-revision: R1A
+  creationTimestamp: "2022-05-11T13:46:08Z"
+  labels:
+    app.kubernetes.io/instance: eric-eo-prod315
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: eric-eo
+    app.kubernetes.io/version: 1.41.0-156
+  name: eric-eo-object-store-cred
+  resourceVersion: "22781372"
+  selfLink: /api/v1/namespaces/eric-eo-cm-prod315/secrets/eric-eo-object-store-cred
+  uid: 24568042-0833-44a8-8b65-11083c26ac1c
+type: Opaque
