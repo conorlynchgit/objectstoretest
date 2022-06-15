@@ -14,6 +14,6 @@ spec:
             value: "PvSpz8BnAOQzmBdh"
         image: "minio/warp:latest"
         imagePullPolicy: Always
-        args: [ "select", "--bucket", "benchmark-bucket", "--warp-client", "warp-{0...0}.warp.storobj-test.svc.cluster.local:7761", "--host", "eric-data-object-storage-mn.storobj-test.svc.cluster.local:9000", "--concurrent", "2", "--obj.size", "5GiB", "--objects", "1" ]
+        args: [ "select", "--bucket", "benchmark-bucket", "--warp-client", "warp-{0...0}.warp.storobj-test.svc.cluster.local:7761", "--host", "eric-data-object-storage-mn.storobj-test.svc.cluster.local:9000", "--concurrent", "1", "--obj.size", "5GiB", "--objects", "1" ]
       restartPolicy: Never
   backoffLimit: 4
