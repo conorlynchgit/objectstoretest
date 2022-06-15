@@ -11,7 +11,7 @@ clusterConfig:
 credentials:
    kubernetesSecretName: eric-eo-object-store-cred
 environment:
-  STORAGE_SERVER_DNS: eric-data-object-storage-mn
+  STORAGE_SERVER_DNS: eric-data-object-storage-mn-0
 bucketname: eocm
 global:
   registry:
